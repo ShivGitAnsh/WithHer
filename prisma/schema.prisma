@@ -1,0 +1,138 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String     @id @default(cuid())
+  email       String     @unique
+  fullName    String
+  phoneNumber String?    @unique
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  consents    Consent[]
+  guardians   Guardian[]
+  trips       Trip[]
+
+  @@index([createdAt])
+}
+
+model Trip {
+  id          String      @id @default(cuid())
+  userId      String
+  title       String
+  destination String
+  startDate   DateTime
+  endDate     DateTime
+  status      TripStatus  @default(PLANNED)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  consents    Consent[]
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  events      TripEvent[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([startDate, endDate])
+  @@index([userId, startDate])
+}
+
+model TripEvent {
+  id          String        @id @default(cuid())
+  tripId      String
+  eventType   TripEventType
+  title       String
+  description String?
+  occurredAt  DateTime
+  metadata    Json?
+  createdAt   DateTime      @default(now())
+  trip        Trip          @relation(fields: [tripId], references: [id], onDelete: Cascade)
+
+  @@index([tripId])
+  @@index([tripId, occurredAt])
+  @@index([eventType, occurredAt])
+}
+
+model Guardian {
+  id           String    @id @default(cuid())
+  userId       String
+  fullName     String
+  relationship String
+  email        String?
+  phoneNumber  String?
+  isPrimary    Boolean   @default(false)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  consents     Consent[]
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, email])
+  @@unique([userId, phoneNumber])
+  @@index([userId])
+  @@index([userId, isPrimary])
+}
+
+model Consent {
+  id          String        @id @default(cuid())
+  userId      String
+  guardianId  String
+  tripId      String?
+  status      ConsentStatus @default(ACTIVE)
+  shareScopes ShareScope[]
+  validFrom   DateTime
+  validUntil  DateTime
+  revokedAt   DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  guardian    Guardian      @relation(fields: [guardianId], references: [id], onDelete: Cascade)
+  trip        Trip?         @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([guardianId])
+  @@index([tripId])
+  @@index([status])
+  @@index([validFrom, validUntil])
+  @@index([userId, guardianId, status])
+}
+
+enum TripStatus {
+  PLANNED
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+enum TripEventType {
+  BOOKED
+  DEPARTED
+  ARRIVED
+  CHECKED_IN
+  CHECKED_OUT
+  TRANSIT
+  DELAYED
+  RETURN_STARTED
+  HOME_REACHED
+  SOS_TRIGGERED
+  CUSTOM
+}
+
+enum ConsentStatus {
+  ACTIVE
+  REVOKED
+  EXPIRED
+}
+
+enum ShareScope {
+  ITINERARY
+  HOTEL_DETAILS
+  FLIGHT_DETAILS
+  LIVE_LOCATION
+  CHECK_IN_UPDATES
+  EMERGENCY_CONTACTS
+  SOS_ALERTS
+}
