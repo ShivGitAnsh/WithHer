@@ -1,6 +1,8 @@
 import {
+  type CheckInRule,
   type Consent,
   type Guardian,
+  type ShareScope,
   TripEventType,
   TripStatus,
   type Trip,
@@ -18,6 +20,10 @@ export const tripFamilyDashboardParamsSchema = z.object({
 
 export const tripSafetyBriefParamsSchema = z.object({
   tripId: z.string().min(1, 'Trip id is required')
+});
+
+export const getTripsQuerySchema = z.object({
+  userId: z.string().min(1, 'User id is required')
 });
 
 export const createTripSchema = z
@@ -50,6 +56,7 @@ export type CreateTripEventInput = z.infer<typeof createTripEventSchema>;
 export type TripIdParams = z.infer<typeof tripIdParamsSchema>;
 export type TripFamilyDashboardParams = z.infer<typeof tripFamilyDashboardParamsSchema>;
 export type TripSafetyBriefParams = z.infer<typeof tripSafetyBriefParamsSchema>;
+export type GetTripsQuery = z.infer<typeof getTripsQuerySchema>;
 
 export interface CreateTripRepositoryInput {
   userId: string;
@@ -71,6 +78,11 @@ export interface CreateTripEventRepositoryInput {
 export type TripWithEvents = Trip & {
   events: TripEvent[];
 };
+
+export type TripListItem = Pick<
+  Trip,
+  'id' | 'userId' | 'title' | 'destination' | 'startDate' | 'endDate' | 'status' | 'createdAt' | 'updatedAt'
+>;
 
 export type FamilyDashboardTrip = Pick<
   Trip,
@@ -116,8 +128,27 @@ export type SafetyBriefLatestEvent = Pick<
   'id' | 'eventType' | 'title' | 'description' | 'occurredAt'
 >;
 
+export type SafetyBriefGuardian = Pick<
+  Guardian,
+  'id' | 'fullName' | 'relationship' | 'isPrimary'
+>;
+
+export type SafetyBriefConsent = Pick<
+  Consent,
+  'id' | 'shareScopes' | 'validFrom' | 'validUntil'
+> & {
+  guardian: SafetyBriefGuardian;
+};
+
+export type SafetyBriefCheckInRule = Pick<
+  CheckInRule,
+  'id' | 'title' | 'expectedEventType' | 'expectedAt' | 'status' | 'graceMinutes'
+>;
+
 export type TripSafetyBriefRecord = SafetyBriefTrip & {
   events: SafetyBriefLatestEvent[];
+  consents: SafetyBriefConsent[];
+  checkInRules: SafetyBriefCheckInRule[];
 };
 
 export interface SafetyBriefLlmInput {
@@ -126,6 +157,23 @@ export interface SafetyBriefLlmInput {
   tripStatus: TripStatus;
   startDate: string;
   endDate: string;
+  tripDurationDays: number;
+  activeGuardianCount: number;
+  primaryGuardianRelationship: string | null;
+  shareScopes: ShareScope[];
+  upcomingCheckIns: Array<{
+    title: string;
+    expectedEventType: string;
+    expectedAt: string;
+    status: string;
+    graceMinutes: number;
+  }>;
+  recentEvents: Array<{
+    eventType: string;
+    title: string;
+    description?: string | null;
+    occurredAt: string;
+  }>;
   latestEvent: {
     eventType: string;
     title: string;

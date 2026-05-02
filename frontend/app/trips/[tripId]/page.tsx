@@ -6,7 +6,8 @@ import {
   getDashboardPageData,
   getEmergencyContacts,
   getMatchingCandidates,
-  getMatchingProfile
+  getMatchingProfile,
+  getPreferredUserId
 } from '@/lib/api';
 
 export default async function TripDetailPage({
@@ -16,8 +17,12 @@ export default async function TripDetailPage({
 }) {
   const { tripId } = await params;
   const data = await getDashboardPageData(tripId);
+  const fallbackUserId =
+    data.trip.userId && !data.trip.userId.startsWith('demo-')
+      ? data.trip.userId
+      : await getPreferredUserId();
   const [emergencyContacts, checkInRules, matchingProfile, matchingCandidates] = await Promise.all([
-    getEmergencyContacts(data.trip.userId ?? 'demo-user-001'),
+    getEmergencyContacts(fallbackUserId),
     getCheckInRules(tripId),
     getMatchingProfile(tripId),
     getMatchingCandidates(tripId)

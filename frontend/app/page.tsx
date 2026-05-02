@@ -3,12 +3,15 @@ import { ArrowRight, Clock3, MapPin, ShieldCheck, Users } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button, buttonVariants } from '@/components/ui/button';
-import { getExploreSafetyPreview } from '@/lib/api';
-import { exploreCollections, recommendedTrips, saraTripCatalog } from '@/lib/product-data';
+import { getExploreSafetyPreview, getUiTestingContext } from '@/lib/api';
+import { exploreCollections, recommendedTrips } from '@/lib/product-data';
 import { cn } from '@/lib/utils';
 
 export default async function ExplorePage() {
-  const { flights, hotels } = await getExploreSafetyPreview();
+  const [{ flights, hotels }, { primaryTripId }] = await Promise.all([
+    getExploreSafetyPreview(),
+    getUiTestingContext()
+  ]);
 
   return (
     <div className="space-y-12 pb-8">
@@ -44,7 +47,7 @@ export default async function ExplorePage() {
             </div>
 
             <div className="flex flex-wrap gap-3">
-              <QuickAction href={`/trips/${saraTripCatalog[0].id}`} label="Start a Journey" />
+              <QuickAction href={`/trips/${primaryTripId}`} label="Start a Journey" />
               <QuickAction href="/my-trips" label="View Trips" secondary />
               <QuickAction href="/guardians" label="Add Guardian" secondary />
             </div>

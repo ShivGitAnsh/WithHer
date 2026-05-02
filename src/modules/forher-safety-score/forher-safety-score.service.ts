@@ -1,29 +1,18 @@
 import { StatusCodes } from 'http-status-codes';
-import { TripEventType, TripStatus } from '@prisma/client';
 
+import { logger } from '../../config/logger';
 import { AppError } from '../../shared/errors/app-error';
 import type {
   ForHerSafetyScoreRepository,
   ForHerSafetyScoreResponse,
-  SafetyScoreEventRecord,
-  SafetyScoreRuleContext,
-  SafetyScoreRuleResult
+  GenerateSafetyScoreInput,
+  SafetyScoreLlmService
 } from './forher-safety-score.types';
-
-const SCORE_MAX = 100;
-const SCORE_MIN = 0;
-const RECENT_EVENT_WINDOW_HOURS = 12;
-const RECENT_CHECK_IN_WINDOW_HOURS = 6;
-const NIGHT_HOURS = new Set([22, 23, 0, 1, 2, 3, 4, 5]);
-const NIGHT_ARRIVAL_EVENT_TYPES: TripEventType[] = [
-  TripEventType.ARRIVED,
-  TripEventType.CHECKED_IN,
-  TripEventType.HOME_REACHED
-];
 
 export class ForHerSafetyScoreService {
   constructor(
-    private readonly forHerSafetyScoreRepository: ForHerSafetyScoreRepository
+    private readonly forHerSafetyScoreRepository: ForHerSafetyScoreRepository,
+    private readonly safetyScoreLlmService: SafetyScoreLlmService
   ) {}
 
   async getTripSafetyScore(tripId: string): Promise<ForHerSafetyScoreResponse> {
@@ -37,146 +26,164 @@ export class ForHerSafetyScoreService {
 
     const latestEvent = trip.events[0] ?? null;
     const latestCheckIn =
-      trip.events.find((event) => event.eventType === TripEventType.CHECKED_IN) ?? null;
-    const now = new Date();
+      trip.events.find((event) => event.eventType === 'CHECKED_IN') ?? null;
 
-    const context: SafetyScoreRuleContext = {
-      trip,
-      latestEvent,
-      latestCheckIn,
-      now
+    try {
+      const result = await this.safetyScoreLlmService.generateSafetyScore({
+        tripId: trip.id,
+        tripStatus: trip.status,
+        startDate: trip.startDate.toISOString(),
+        endDate: trip.endDate.toISOString(),
+        recentEvents: trip.events.slice(0, 6).map((event) => ({
+          eventType: event.eventType,
+          title: event.title,
+          occurredAt: event.occurredAt.toISOString()
+        })),
+        latestEvent: latestEvent
+          ? {
+              eventType: latestEvent.eventType,
+              title: latestEvent.title,
+              occurredAt: latestEvent.occurredAt.toISOString()
+            }
+          : null,
+        latestCheckIn: latestCheckIn
+          ? {
+              eventType: latestCheckIn.eventType,
+              title: latestCheckIn.title,
+              occurredAt: latestCheckIn.occurredAt.toISOString()
+            }
+          : null
+      });
+
+      return {
+        ...result,
+        fallbackUsed: false
+      };
+    } catch (error) {
+      logger.warn(
+        {
+          err: error,
+          tripId
+        },
+        'Failed to generate Gemini safety score'
+      );
+
+      return this.buildFallbackSafetyScore({
+        tripStatus: trip.status,
+        latestEvent,
+        latestCheckIn
+      });
+    }
+  }
+
+  async generateSafetyScore(
+    input: GenerateSafetyScoreInput
+  ): Promise<ForHerSafetyScoreResponse> {
+    const recentEvents = [...input.recentEvents].sort(
+      (left, right) => right.occurredAt.getTime() - left.occurredAt.getTime()
+    );
+    const latestEvent = input.latestEvent ?? recentEvents[0] ?? null;
+    const latestCheckIn =
+      input.latestCheckIn ??
+      recentEvents.find((event) => event.eventType === 'CHECKED_IN') ??
+      null;
+
+    try {
+      const result = await this.safetyScoreLlmService.generateSafetyScore({
+        tripId:
+          input.tripId ??
+          `preview-${input.destination.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
+        tripTitle: input.tripTitle,
+        destination: input.destination,
+        tripStatus: input.tripStatus,
+        startDate: input.startDate.toISOString(),
+        endDate: input.endDate.toISOString(),
+        recentEvents: recentEvents.slice(0, 6).map((event) => ({
+          eventType: event.eventType,
+          title: event.title,
+          occurredAt: event.occurredAt.toISOString()
+        })),
+        latestEvent: latestEvent
+          ? {
+              eventType: latestEvent.eventType,
+              title: latestEvent.title,
+              occurredAt: latestEvent.occurredAt.toISOString()
+            }
+          : null,
+        latestCheckIn: latestCheckIn
+          ? {
+              eventType: latestCheckIn.eventType,
+              title: latestCheckIn.title,
+              occurredAt: latestCheckIn.occurredAt.toISOString()
+            }
+          : null
+      });
+
+      return {
+        ...result,
+        fallbackUsed: false
+      };
+    } catch (error) {
+      logger.warn(
+        {
+          err: error,
+          tripId: input.tripId ?? null,
+          destination: input.destination
+        },
+        'Failed to generate Gemini preview safety score'
+      );
+
+      return this.buildFallbackSafetyScore({
+        tripStatus: input.tripStatus,
+        latestEvent: latestEvent
+          ? {
+              title: latestEvent.title
+            }
+          : null,
+        latestCheckIn: latestCheckIn
+          ? {
+              title: latestCheckIn.title
+            }
+          : null
+      });
+    }
+  }
+
+  private buildFallbackSafetyScore(input: {
+    tripStatus: string;
+    latestEvent: { title: string } | null;
+    latestCheckIn: { title: string } | null;
+  }): ForHerSafetyScoreResponse {
+    const scoreByStatus: Record<string, number> = {
+      PLANNED: 74,
+      ACTIVE: 78,
+      COMPLETED: 86,
+      CANCELLED: 42
     };
-
-    const ruleResults = [
-      this.applyActiveTripRule(context),
-      this.applyRecentCheckInRule(context),
-      this.applyLateArrivalRule(context),
-      this.applyRecentEventRule(context)
+    const score = scoreByStatus[input.tripStatus] ?? 70;
+    const status: ForHerSafetyScoreResponse['status'] =
+      score >= 80 ? 'Safe' : score >= 60 ? 'Moderate' : 'Risky';
+    const reasons = [
+      input.latestCheckIn
+        ? `Recent check-in recorded: ${input.latestCheckIn.title}.`
+        : input.latestEvent
+          ? `Latest recorded update: ${input.latestEvent.title}.`
+          : 'No recent trip milestone has been recorded yet.',
+      input.tripStatus === 'COMPLETED'
+        ? 'The trip is already completed, which reduces active travel uncertainty.'
+        : input.tripStatus === 'ACTIVE'
+          ? 'The journey is in progress, so confidence depends on timely status updates.'
+          : input.tripStatus === 'PLANNED'
+            ? 'The trip is still planned, so live in-transit reassurance signals are not available yet.'
+            : 'The current trip status limits how much live travel confidence can be inferred.',
+      'Gemini scoring is currently unavailable for this project, so this fallback score is based on trip status and recent timeline events.'
     ];
 
-    const score = ruleResults.reduce(
-      (currentScore, result) => currentScore + result.scoreDelta,
-      SCORE_MAX
-    );
-
     return {
-      score: Math.max(SCORE_MIN, Math.min(SCORE_MAX, score)),
-      status: this.getSafetyStatus(score),
-      reasons: ruleResults.flatMap((result) => (result.reason ? [result.reason] : []))
+      score,
+      status,
+      reasons,
+      fallbackUsed: true
     };
-  }
-
-  private applyActiveTripRule(
-    context: SafetyScoreRuleContext
-  ): SafetyScoreRuleResult {
-    if (context.trip.status !== TripStatus.ACTIVE) {
-      return {
-        scoreDelta: 0
-      };
-    }
-
-    return {
-      scoreDelta: 5,
-      reason: 'Trip is currently active and being tracked.'
-    };
-  }
-
-  private applyRecentCheckInRule(
-    context: SafetyScoreRuleContext
-  ): SafetyScoreRuleResult {
-    if (!context.latestCheckIn) {
-      return {
-        scoreDelta: 0
-      };
-    }
-
-    const hoursSinceCheckIn = this.getHoursSince(context.latestCheckIn.occurredAt, context.now);
-
-    if (hoursSinceCheckIn > RECENT_CHECK_IN_WINDOW_HOURS) {
-      return {
-        scoreDelta: 0
-      };
-    }
-
-    return {
-      scoreDelta: 10,
-      reason: 'A recent check-in was recorded for this trip.'
-    };
-  }
-
-  private applyLateArrivalRule(
-    context: SafetyScoreRuleContext
-  ): SafetyScoreRuleResult {
-    if (!context.latestEvent) {
-      return {
-        scoreDelta: 0
-      };
-    }
-
-    const isArrivalEvent = NIGHT_ARRIVAL_EVENT_TYPES.includes(
-      context.latestEvent.eventType
-    );
-
-    const eventHour = context.latestEvent.occurredAt.getHours();
-
-    if (!isArrivalEvent || !NIGHT_HOURS.has(eventHour)) {
-      return {
-        scoreDelta: 0
-      };
-    }
-
-    return {
-      scoreDelta: -20,
-      reason: 'The latest arrival-related update happened during late-night hours.'
-    };
-  }
-
-  private applyRecentEventRule(
-    context: SafetyScoreRuleContext
-  ): SafetyScoreRuleResult {
-    if (context.trip.status !== TripStatus.ACTIVE) {
-      return {
-        scoreDelta: 0
-      };
-    }
-
-    if (!context.latestEvent) {
-      return {
-        scoreDelta: -25,
-        reason: 'No recent trip event is available for an active trip.'
-      };
-    }
-
-    const hoursSinceLatestEvent = this.getHoursSince(
-      context.latestEvent.occurredAt,
-      context.now
-    );
-
-    if (hoursSinceLatestEvent <= RECENT_EVENT_WINDOW_HOURS) {
-      return {
-        scoreDelta: 0
-      };
-    }
-
-    return {
-      scoreDelta: -25,
-      reason: 'No recent trip event has been recorded in the last 12 hours.'
-    };
-  }
-
-  private getHoursSince(date: Date, now: Date): number {
-    return (now.getTime() - date.getTime()) / (1000 * 60 * 60);
-  }
-
-  private getSafetyStatus(score: number): 'Safe' | 'Moderate' | 'Risky' {
-    if (score >= 80) {
-      return 'Safe';
-    }
-
-    if (score >= 60) {
-      return 'Moderate';
-    }
-
-    return 'Risky';
   }
 }

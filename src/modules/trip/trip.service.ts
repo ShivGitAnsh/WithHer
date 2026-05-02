@@ -12,6 +12,7 @@ import type {
   FamilyDashboardResponse,
   SafetyBriefLlmService,
   SafetyBriefResponse,
+  TripListItem,
   TripWithEvents
 } from './trip.types';
 
@@ -50,6 +51,16 @@ export class TripService {
     return trip;
   }
 
+  async getTripsByUserId(userId: string): Promise<TripListItem[]> {
+    const userExists = await this.tripRepository.userExists(userId);
+
+    if (!userExists) {
+      throw new AppError('User not found', StatusCodes.NOT_FOUND, 'USER_NOT_FOUND');
+    }
+
+    return this.tripRepository.findTripsByUserId(userId);
+  }
+
   async getFamilyDashboard(tripId: string): Promise<FamilyDashboardResponse> {
     const trip = await this.tripRepository.findFamilyDashboardByTripId(tripId, new Date());
 
@@ -79,19 +90,46 @@ export class TripService {
   }
 
   async generateSafetyBrief(tripId: string): Promise<SafetyBriefResponse> {
-    const trip = await this.tripRepository.findSafetyBriefByTripId(tripId);
+    const trip = await this.tripRepository.findSafetyBriefByTripId(tripId, new Date());
 
     if (!trip) {
       throw new AppError('Trip not found', StatusCodes.NOT_FOUND, 'TRIP_NOT_FOUND');
     }
 
     const latestEvent = trip.events[0] ?? null;
+    const tripDurationDays = Math.max(
+      1,
+      Math.ceil(
+        (trip.endDate.getTime() - trip.startDate.getTime()) / (1000 * 60 * 60 * 24)
+      ) + 1
+    );
+    const activeGuardianCount = trip.consents.length;
+    const primaryGuardianRelationship =
+      trip.consents.find((consent) => consent.guardian.isPrimary)?.guardian.relationship ?? null;
+    const shareScopes = [...new Set(trip.consents.flatMap((consent) => consent.shareScopes))];
     const llmInput = {
       tripTitle: trip.title,
       destination: trip.destination,
       tripStatus: trip.status,
       startDate: trip.startDate.toISOString(),
       endDate: trip.endDate.toISOString(),
+      tripDurationDays,
+      activeGuardianCount,
+      primaryGuardianRelationship,
+      shareScopes,
+      upcomingCheckIns: trip.checkInRules.map((rule) => ({
+        title: rule.title,
+        expectedEventType: rule.expectedEventType,
+        expectedAt: rule.expectedAt.toISOString(),
+        status: rule.status,
+        graceMinutes: rule.graceMinutes
+      })),
+      recentEvents: trip.events.map((event) => ({
+        eventType: event.eventType,
+        title: event.title,
+        description: event.description,
+        occurredAt: event.occurredAt.toISOString()
+      })),
       latestEvent: latestEvent
         ? {
             eventType: latestEvent.eventType,
@@ -109,12 +147,16 @@ export class TripService {
         throw new Error('Safety brief LLM returned an empty response');
       }
 
+      if (!this.isDetailedSafetyBrief(brief)) {
+        throw new Error('Safety brief LLM returned a brief that was too thin to be useful');
+      }
+
       return {
         brief,
         fallbackUsed: false
       };
     } catch (error) {
-      logger.error(
+      logger.warn(
         {
           err: error,
           tripId
@@ -126,6 +168,14 @@ export class TripService {
         brief: this.buildFallbackSafetyBrief({
           tripTitle: trip.title,
           destination: trip.destination,
+          tripStatus: trip.status,
+          startDate: trip.startDate,
+          endDate: trip.endDate,
+          tripDurationDays,
+          activeGuardianCount,
+          primaryGuardianRelationship,
+          shareScopes,
+          upcomingCheckInsCount: trip.checkInRules.length,
           latestEvent
         }),
         fallbackUsed: true
@@ -180,6 +230,14 @@ export class TripService {
   private buildFallbackSafetyBrief(input: {
     tripTitle: string;
     destination: string;
+    tripStatus: string;
+    startDate: Date;
+    endDate: Date;
+    tripDurationDays: number;
+    activeGuardianCount: number;
+    primaryGuardianRelationship: string | null;
+    shareScopes: string[];
+    upcomingCheckInsCount: number;
     latestEvent: {
       eventType: string;
       title: string;
@@ -187,6 +245,27 @@ export class TripService {
       occurredAt: Date;
     } | null;
   }): string {
+    const dateRange = new Intl.DateTimeFormat('en-IN', {
+      day: 'numeric',
+      month: 'short'
+    }).formatRange(input.startDate, input.endDate);
+    const sharingSummary =
+      input.activeGuardianCount === 0
+        ? 'No guardian sharing is active yet.'
+        : input.primaryGuardianRelationship
+          ? `${input.activeGuardianCount} guardian${input.activeGuardianCount > 1 ? 's are' : ' is'} active, including a primary ${input.primaryGuardianRelationship.toLowerCase()}.`
+          : `${input.activeGuardianCount} guardian${input.activeGuardianCount > 1 ? 's are' : ' is'} active for this trip.`;
+    const checkInSummary =
+      input.upcomingCheckInsCount > 0
+        ? `${input.upcomingCheckInsCount} check-in milestone${input.upcomingCheckInsCount > 1 ? 's are' : ' is'} already configured.`
+        : 'No automated check-in milestones have been configured yet.';
+    const scopeSummary =
+      input.shareScopes.length > 0
+        ? `Shared coverage includes ${input.shareScopes
+            .map((scope) => this.formatShareScope(scope))
+            .join(', ')}.`
+        : 'No trip detail scopes have been shared yet.';
+
     if (input.latestEvent) {
       const formattedTime = new Intl.DateTimeFormat('en-IN', {
         hour: 'numeric',
@@ -195,16 +274,52 @@ export class TripService {
       }).format(input.latestEvent.occurredAt);
 
       return [
-        `This trip is for ${input.destination} and the latest recorded update is ${input.latestEvent.eventType} at ${formattedTime}.`,
-        `The current update is "${input.latestEvent.title}".`,
-        'This summary is based only on the trip details and latest recorded event.'
+        `${input.tripTitle} is a ${input.tripDurationDays}-day ${input.destination} trip scheduled for ${dateRange} and it is currently marked ${input.tripStatus.toLowerCase()}.`,
+        `${sharingSummary} ${checkInSummary} ${scopeSummary}`,
+        `The latest recorded trip update is "${input.latestEvent.title}" at ${formattedTime}.`
       ].join(' ');
     }
 
     return [
-      `This trip is planned for ${input.destination}.`,
-      'There is no travel update recorded yet.',
-      'This summary is based only on the trip details currently available.'
+      `${input.tripTitle} is a ${input.tripDurationDays}-day ${input.destination} trip scheduled for ${dateRange} and it is currently marked ${input.tripStatus.toLowerCase()}.`,
+      `${sharingSummary} ${checkInSummary} ${scopeSummary}`,
+      'No live travel milestone has been recorded yet, so this brief is based on the setup that is already configured for the trip.'
     ].join(' ');
+  }
+
+  private formatShareScope(scope: string): string {
+    switch (scope) {
+      case 'ITINERARY':
+        return 'itinerary details';
+      case 'HOTEL_DETAILS':
+        return 'hotel details';
+      case 'FLIGHT_DETAILS':
+        return 'flight details';
+      case 'LIVE_LOCATION':
+        return 'live location';
+      case 'CHECK_IN_UPDATES':
+        return 'check-in updates';
+      case 'EMERGENCY_CONTACTS':
+        return 'emergency contacts';
+      case 'SOS_ALERTS':
+        return 'SOS alerts';
+      default:
+        return scope.toLowerCase().replace(/_/g, ' ');
+    }
+  }
+
+  private isDetailedSafetyBrief(brief: string): boolean {
+    const normalized = brief.trim();
+
+    if (normalized.length < 90) {
+      return false;
+    }
+
+    const sentences = normalized
+      .split(/(?<=[.!?])\s+/)
+      .map((sentence) => sentence.trim())
+      .filter(Boolean);
+
+    return sentences.length >= 2;
   }
 }

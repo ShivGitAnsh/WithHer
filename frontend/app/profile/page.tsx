@@ -1,20 +1,20 @@
 import { ProfilePageClient } from '@/components/sara/profile-page-client';
-import { getEmergencyContacts, getGuardians } from '@/lib/api';
-import { saraTripCatalog, saraUserProfile } from '@/lib/product-data';
+import { getEmergencyContacts, getGuardians, getUiTestingContext } from '@/lib/api';
 
 export default async function ProfilePage() {
+  const { profile, trips } = await getUiTestingContext();
   const [guardians, emergencyContacts] = await Promise.all([
-    getGuardians(saraUserProfile.id),
-    getEmergencyContacts(saraUserProfile.id)
+    getGuardians(profile.id),
+    getEmergencyContacts(profile.id)
   ]);
 
   return (
     <ProfilePageClient
-      profile={saraUserProfile}
+      profile={profile}
       guardians={guardians}
       initialEmergencyContacts={emergencyContacts}
-      tripCount={saraTripCatalog.length}
-      activeJourneyCount={saraTripCatalog.filter((trip) => trip.status === 'ACTIVE').length}
+      tripCount={trips.length}
+      activeJourneyCount={trips.filter((trip) => trip.status === 'ACTIVE').length}
     />
   );
 }

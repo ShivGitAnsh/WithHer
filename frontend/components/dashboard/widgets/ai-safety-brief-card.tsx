@@ -32,7 +32,9 @@ export function AiSafetyBriefCard({
       </CardHeader>
       <CardContent className="space-y-5">
         <div className="rounded-[1.7rem] border border-border/80 bg-white/92 p-5">
-          <p className="text-sm leading-8 text-cocoa">{data.safetyBrief.brief}</p>
+          <p className="whitespace-pre-wrap break-words text-sm leading-8 text-cocoa">
+            {data.safetyBrief.brief}
+          </p>
         </div>
 
         <div className="rounded-[1.45rem] bg-secondary px-4 py-3 text-sm text-secondary-foreground">

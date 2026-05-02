@@ -1,25 +1,24 @@
 import { GuardiansPageClient } from '@/components/sara/guardians-page-client';
 import {
   getConsents,
-  getDefaultDemoTripId,
   getFamilyDashboardData,
   getGuardians,
-  getTrustLog
+  getTrustLog,
+  getUiTestingContext
 } from '@/lib/api';
-import { saraUserProfile } from '@/lib/product-data';
 
 export default async function GuardiansPage() {
-  const tripId = getDefaultDemoTripId();
+  const { profile, primaryTripId } = await getUiTestingContext();
   const [trustData, guardians, consents, trustLog] = await Promise.all([
-    getFamilyDashboardData(tripId),
-    getGuardians(saraUserProfile.id),
-    getConsents({ tripId }),
-    getTrustLog(tripId)
+    getFamilyDashboardData(primaryTripId),
+    getGuardians(profile.id),
+    getConsents({ tripId: primaryTripId }),
+    getTrustLog(primaryTripId)
   ]);
 
   return (
     <GuardiansPageClient
-      userId={saraUserProfile.id}
+      userId={profile.id}
       trip={trustData.trip}
       initialGuardians={guardians}
       initialConsents={consents}

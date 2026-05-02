@@ -43,6 +43,13 @@ export interface ItineraryPlanDay {
 export interface StoredItineraryPayload {
   rationale: string[];
   days: ItineraryPlanDay[];
+  fallbackUsed?: boolean;
+}
+
+export interface GeneratedItineraryLlmOutput {
+  overview: string;
+  rationale: string[];
+  days: ItineraryPlanDay[];
 }
 
 export interface GenerateItineraryRepositoryInput {
@@ -59,6 +66,16 @@ export type ItineraryTripContext = Pick<
   Trip,
   'id' | 'title' | 'destination' | 'startDate' | 'endDate' | 'status'
 >;
+
+export interface ItineraryLlmInput {
+  destination: string;
+  numberOfDays: number;
+  travelersCount: number;
+  tripTitle?: string;
+  tripStatus?: Trip['status'];
+  startDate?: string;
+  endDate?: string;
+}
 
 export type ItineraryPlanRecord = Pick<
   ItineraryPlan,
@@ -85,6 +102,7 @@ export interface ItineraryPlanResponse {
   overview: string;
   rationale: string[];
   days: ItineraryPlanDay[];
+  fallbackUsed: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -94,4 +112,8 @@ export interface ForHerItineraryRepository {
   createItineraryPlan(input: GenerateItineraryRepositoryInput): Promise<ItineraryPlanRecord>;
   findItineraryPlanById(id: string): Promise<ItineraryPlanRecord | null>;
   findLatestItineraryPlanByTripId(tripId: string): Promise<ItineraryPlanRecord | null>;
+}
+
+export interface ItineraryLlmService {
+  generateItinerary(input: ItineraryLlmInput): Promise<GeneratedItineraryLlmOutput>;
 }

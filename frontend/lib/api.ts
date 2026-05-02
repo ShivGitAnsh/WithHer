@@ -12,7 +12,9 @@ import {
   saraEmergencyContacts,
   saraGuardianProfiles,
   saraHotelListings,
-  saraTrustLogEntries
+  saraTripCatalog,
+  saraTrustLogEntries,
+  saraUserProfile
 } from '@/lib/product-data';
 import type {
   CheckInEvaluationData,
@@ -42,7 +44,11 @@ import type {
   SafetyBriefData,
   SosCaseData,
   SosTriggerData,
-  TrustLogEntryData
+  TripEvent,
+  TripSummary,
+  TrustLogEntryData,
+  UiTestingContextData,
+  UserProfileData
 } from '@/lib/types';
 
 const API_BASE_URL =
@@ -51,12 +57,147 @@ const API_BASE_URL =
 const DEMO_TRIP_ID =
   process.env.NEXT_PUBLIC_DEMO_TRIP_ID || demoDashboardData.tripId;
 
+const REAL_USER_ID = process.env.NEXT_PUBLIC_REAL_USER_ID?.trim() ?? '';
+
 /** IDs like `demo-trip-goa` / `demo-user-001` are not in the database — use local demo data only. */
 const isDemoEntityId = (id: string | undefined): boolean =>
   typeof id === 'string' && id.startsWith('demo-');
 
 function buildDemoDashboardForTrip(tripId: string): DashboardPageData {
   return buildDemoDashboardData(tripId);
+}
+
+function buildDemoTripSummaries(): TripSummary[] {
+  return saraTripCatalog.map((trip) => ({
+    id: trip.id,
+    userId: saraUserProfile.id,
+    title: trip.title,
+    destination: trip.destination,
+    status: trip.status,
+    startDate: trip.startDate,
+    endDate: trip.endDate
+  }));
+}
+
+function buildUiProfileFromUser(user: UserProfileData) {
+  return {
+    id: user.id,
+    name: user.fullName,
+    role: user.phoneNumber ? `Solo traveller - ${user.phoneNumber}` : 'Solo traveller',
+    email: user.email,
+    city: 'Not set in booking profile',
+    membership: 'SARA Traveller'
+  };
+}
+
+function buildUiTestingContextFromUser(
+  user: UserProfileData,
+  trips: TripSummary[]
+): UiTestingContextData {
+  return {
+    profile: buildUiProfileFromUser(user),
+    trips,
+    primaryTripId: trips[0].id,
+    source: 'api'
+  };
+}
+
+function buildFallbackSafetyBrief(
+  trip: TripSummary,
+  latestEvent: TripEvent | null
+): SafetyBriefData {
+  if (latestEvent) {
+    const occurredAt = new Intl.DateTimeFormat('en-IN', {
+      day: 'numeric',
+      month: 'short',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    }).format(new Date(latestEvent.occurredAt));
+
+    return {
+      brief: `This trip to ${trip.destination} is currently ${trip.status.toLowerCase()}. The latest recorded update is "${latestEvent.title}" at ${occurredAt}.`,
+      fallbackUsed: true
+    };
+  }
+
+  return {
+    brief: `This trip to ${trip.destination} is currently ${trip.status.toLowerCase()}. No live milestone has been recorded yet, so SARA is showing a structured fallback summary.`,
+    fallbackUsed: true
+  };
+}
+
+function buildFallbackSafetyScore(
+  trip: TripSummary,
+  latestEvent: TripEvent | null
+): SafetyScoreData {
+  const scoreByStatus: Record<TripSummary['status'], number> = {
+    PLANNED: 82,
+    ACTIVE: 76,
+    COMPLETED: 79,
+    CANCELLED: 48
+  };
+  const score = scoreByStatus[trip.status] ?? 70;
+  const status: SafetyScoreData['status'] =
+    score >= 80 ? 'Safe' : score >= 60 ? 'Moderate' : 'Risky';
+
+  return {
+    score,
+    status,
+    reasons: [
+      `Live AI scoring is unavailable right now for ${trip.destination}, so this is a fallback score.`,
+      latestEvent
+        ? `Latest trip milestone: ${latestEvent.title}.`
+        : 'No trip milestone has been recorded yet.',
+      'The rest of the trip view is still using real database data.'
+    ],
+    fallbackUsed: true
+  };
+}
+
+async function generateSafetyScorePreview(input: {
+  trip: TripSummary;
+  timeline: TripEvent[];
+  latestEvent: TripEvent | null;
+}): Promise<SafetyScoreData> {
+  const latestCheckIn =
+    [...input.timeline]
+      .sort(
+        (left, right) =>
+          new Date(right.occurredAt).getTime() - new Date(left.occurredAt).getTime()
+      )
+      .find((event) => event.eventType === 'CHECKED_IN') ?? null;
+
+  return fetchJson<SafetyScoreData>(`${API_BASE_URL}/forher/safety-score/generate`, {
+    method: 'POST',
+    body: JSON.stringify({
+      tripId: input.trip.id,
+      tripTitle: input.trip.title,
+      destination: input.trip.destination,
+      tripStatus: input.trip.status,
+      startDate: input.trip.startDate,
+      endDate: input.trip.endDate,
+      recentEvents: input.timeline.map((event) => ({
+        eventType: event.eventType,
+        title: event.title,
+        occurredAt: event.occurredAt
+      })),
+      latestEvent: input.latestEvent
+        ? {
+            eventType: input.latestEvent.eventType,
+            title: input.latestEvent.title,
+            occurredAt: input.latestEvent.occurredAt
+          }
+        : null,
+      latestCheckIn: latestCheckIn
+        ? {
+            eventType: latestCheckIn.eventType,
+            title: latestCheckIn.title,
+            occurredAt: latestCheckIn.occurredAt
+          }
+        : null
+    })
+  });
 }
 
 async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
@@ -119,12 +260,29 @@ export async function getDashboardPageData(
   tripId = DEMO_TRIP_ID
 ): Promise<DashboardPageData> {
   if (isDemoEntityId(tripId)) {
-    return buildDemoDashboardForTrip(tripId);
+    const demoData = buildDemoDashboardForTrip(tripId);
+
+    try {
+      const safetyScore = await generateSafetyScorePreview({
+        trip: demoData.trip,
+        timeline: demoData.timeline,
+        latestEvent: demoData.latestEvent
+      });
+
+      return {
+        ...demoData,
+        safetyScore
+      };
+    } catch {
+      return demoData;
+    }
   }
 
-  try {
-    const [dashboard, safetyBrief, safetyScore, itineraryPlan] = await Promise.all([
-      fetchJson<FamilyDashboardApiResponse>(`${API_BASE_URL}/trips/${tripId}/family-dashboard`),
+  const dashboard = await fetchJson<FamilyDashboardApiResponse>(
+    `${API_BASE_URL}/trips/${tripId}/family-dashboard`
+  );
+  const [safetyBriefResult, safetyScoreResult, itineraryPlanResult] =
+    await Promise.allSettled([
       fetchJson<SafetyBriefData>(`${API_BASE_URL}/trips/${tripId}/safety-brief`, {
         method: 'POST'
       }),
@@ -132,24 +290,112 @@ export async function getDashboardPageData(
       getLatestItineraryForTrip(tripId)
     ]);
 
-    return {
-      tripId,
-      trip: dashboard.trip,
-      latestEvent: dashboard.latestEvent,
-      timeline: dashboard.timeline,
-      guardians: dashboard.guardians,
-      safetyBrief,
-      safetyScore,
-      itineraryPlan,
-      source: 'api'
-    };
-  } catch {
-    return demoDashboardData;
-  }
+  return {
+    tripId,
+    trip: dashboard.trip,
+    latestEvent: dashboard.latestEvent,
+    timeline: dashboard.timeline,
+    guardians: dashboard.guardians,
+    safetyBrief:
+      safetyBriefResult.status === 'fulfilled'
+        ? safetyBriefResult.value
+        : buildFallbackSafetyBrief(dashboard.trip, dashboard.latestEvent),
+    safetyScore:
+      safetyScoreResult.status === 'fulfilled'
+        ? safetyScoreResult.value
+        : buildFallbackSafetyScore(dashboard.trip, dashboard.latestEvent),
+    itineraryPlan:
+      itineraryPlanResult.status === 'fulfilled' ? itineraryPlanResult.value : null,
+    source: 'api'
+  };
 }
 
 export function getDefaultDemoTripId(): string {
   return DEMO_TRIP_ID;
+}
+
+export function getConfiguredUserId(): string {
+  return REAL_USER_ID || saraUserProfile.id;
+}
+
+export async function getPreferredUserId(): Promise<string> {
+  if (REAL_USER_ID) {
+    return REAL_USER_ID;
+  }
+
+  try {
+    const context = await getUiTestingContext();
+
+    return context.profile.id;
+  } catch {
+    return saraUserProfile.id;
+  }
+}
+
+export async function getUserProfile(userId: string): Promise<UserProfileData> {
+  if (isDemoEntityId(userId)) {
+    const timestamp = new Date().toISOString();
+
+    return {
+      id: saraUserProfile.id,
+      fullName: saraUserProfile.name,
+      email: saraUserProfile.email,
+      phoneNumber: null,
+      createdAt: timestamp,
+      updatedAt: timestamp
+    };
+  }
+
+  return fetchJson<UserProfileData>(`${API_BASE_URL}/users/${encodeURIComponent(userId)}`);
+}
+
+export async function getTripsForUser(userId: string): Promise<TripSummary[]> {
+  if (isDemoEntityId(userId)) {
+    return buildDemoTripSummaries();
+  }
+
+  return fetchJson<TripSummary[]>(
+    `${API_BASE_URL}/trips?userId=${encodeURIComponent(userId)}`
+  );
+}
+
+export async function getUiTestingContext(): Promise<UiTestingContextData> {
+  if (!REAL_USER_ID) {
+    try {
+      const context = await fetchJson<{
+        user: UserProfileData;
+        trips: TripSummary[];
+      }>(`${API_BASE_URL}/users/testing-context`);
+
+      if (context.trips.length > 0) {
+        return buildUiTestingContextFromUser(context.user, context.trips);
+      }
+    } catch {
+      // Fall back to demo mode when no DB-backed testing context is available.
+    }
+
+    const demoTrips = buildDemoTripSummaries();
+
+    return {
+      profile: { ...saraUserProfile },
+      trips: demoTrips,
+      primaryTripId: demoTrips[0]?.id ?? DEMO_TRIP_ID,
+      source: 'demo'
+    };
+  }
+
+  const [user, trips] = await Promise.all([
+    getUserProfile(REAL_USER_ID),
+    getTripsForUser(REAL_USER_ID)
+  ]);
+
+  if (trips.length === 0) {
+    throw new Error(
+      `No trips were found for NEXT_PUBLIC_REAL_USER_ID=${REAL_USER_ID}. Add a trip for that user or remove the variable to return to demo mode.`
+    );
+  }
+
+  return buildUiTestingContextFromUser(user, trips);
 }
 
 export async function getFamilyDashboardData(
@@ -177,26 +423,19 @@ export async function refreshDashboardData(tripId: string) {
 
 export async function regenerateSafetyBrief(tripId: string): Promise<SafetyBriefData> {
   if (isDemoEntityId(tripId)) {
-    return { ...demoSafetyBrief, fallbackUsed: false };
+    return demoSafetyBrief;
   }
 
-  try {
-    return await fetchJson<SafetyBriefData>(`${API_BASE_URL}/trips/${tripId}/safety-brief`, {
-      method: 'POST'
-    });
-  } catch {
-    return {
-      ...demoSafetyBrief,
-      fallbackUsed: true
-    };
-  }
+  return fetchJson<SafetyBriefData>(`${API_BASE_URL}/trips/${tripId}/safety-brief`, {
+    method: 'POST'
+  });
 }
 
 export async function getLatestItineraryForTrip(
   tripId: string
 ): Promise<ItineraryPlanData | null> {
   if (isDemoEntityId(tripId)) {
-    return buildDemoDashboardForTrip(tripId).itineraryPlan;
+    return null;
   }
 
   try {
@@ -214,42 +453,16 @@ export async function generateItineraryPlan(input: {
   numberOfDays: number;
   travelersCount?: number;
 }): Promise<ItineraryPlanData> {
-  if ((input.tripId && isDemoEntityId(input.tripId)) || (!input.tripId && input.destination)) {
-    const dashboard = buildDemoDashboardForTrip(input.tripId ?? DEMO_TRIP_ID);
-    const existing = dashboard.itineraryPlan;
-
-    return {
-      ...(existing ?? {
-        id: `demo-itinerary-${Date.now()}`,
-        tripId: input.tripId ?? null,
-        destination: input.destination ?? dashboard.trip.destination,
-        numberOfDays: input.numberOfDays,
-        travelersCount: input.travelersCount ?? 1,
-        title: `${input.destination ?? dashboard.trip.destination} Safe Itinerary`,
-        overview: `A ${input.numberOfDays}-day SARA itinerary built for calm, daylight-first movement.`,
-        rationale: [
-          'Daylight-first sequencing reduces uncertain late movement.',
-          'Shorter evening plans keep the return leg predictable.',
-          'The route is grouped into fewer zones to avoid unnecessary backtracking.'
-        ],
-        days: [],
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      }),
-      id: existing?.id ?? `demo-itinerary-${Date.now()}`,
-      tripId: input.tripId ?? existing?.tripId ?? null,
-      destination: input.destination ?? existing?.destination ?? dashboard.trip.destination,
-      numberOfDays: input.numberOfDays,
-      travelersCount: input.travelersCount ?? existing?.travelersCount ?? 1,
-      updatedAt: new Date().toISOString()
-    };
-  }
+  const demoTrip =
+    input.tripId && isDemoEntityId(input.tripId)
+      ? buildDemoDashboardForTrip(input.tripId).trip
+      : null;
 
   return fetchJson<ItineraryPlanData>(`${API_BASE_URL}/forher/itineraries/generate`, {
     method: 'POST',
     body: JSON.stringify({
-      tripId: input.tripId,
-      destination: input.destination,
+      tripId: demoTrip ? undefined : input.tripId,
+      destination: input.destination ?? demoTrip?.destination,
       numberOfDays: input.numberOfDays,
       travelersCount: input.travelersCount ?? 1
     })

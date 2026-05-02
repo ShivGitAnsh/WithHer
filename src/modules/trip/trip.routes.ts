@@ -38,6 +38,7 @@ export const buildTripRouter = (): Router => {
   const tripController = new TripController(tripService);
 
   router.post('/', tripController.createTrip);
+  router.get('/', tripController.getTrips);
   router.post('/:tripId/safety-brief', tripController.generateSafetyBrief);
   router.get('/:tripId/family-dashboard', tripController.getFamilyDashboard);
   router.get('/:id', tripController.getTripById);

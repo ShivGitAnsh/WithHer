@@ -10,6 +10,29 @@ export interface TripSummary {
   endDate?: string;
 }
 
+export interface UserProfileData {
+  id: string;
+  fullName: string;
+  email: string;
+  phoneNumber?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UiTestingContextData {
+  profile: {
+    id: string;
+    name: string;
+    role: string;
+    email: string;
+    city: string;
+    membership: string;
+  };
+  trips: TripSummary[];
+  primaryTripId: string;
+  source: 'api' | 'demo';
+}
+
 export interface TripEvent {
   id: string;
   tripId: string;
@@ -99,6 +122,7 @@ export interface SafetyScoreData {
   score: number;
   status: 'Safe' | 'Moderate' | 'Risky';
   reasons: string[];
+  fallbackUsed?: boolean;
 }
 
 export interface ItineraryPlanItem {
@@ -127,6 +151,7 @@ export interface ItineraryPlanData {
   overview: string;
   rationale: string[];
   days: ItineraryPlanDay[];
+  fallbackUsed?: boolean;
   createdAt: string;
   updatedAt: string;
 }

@@ -1,4 +1,5 @@
 import {
+  CheckInRuleStatus,
   ConsentStatus,
   GuardianInviteStatus,
   type PrismaClient,
@@ -10,6 +11,7 @@ import type { TripRepository } from './trip.repository';
 import type {
   CreateTripEventRepositoryInput,
   CreateTripRepositoryInput,
+  TripListItem,
   TripSafetyBriefRecord,
   TripFamilyDashboardRecord,
   TripWithEvents
@@ -42,6 +44,24 @@ export class PrismaTripRepository implements TripRepository {
     });
   }
 
+  async findTripsByUserId(userId: string): Promise<TripListItem[]> {
+    return this.prisma.trip.findMany({
+      where: { userId },
+      orderBy: [{ startDate: 'asc' }, { createdAt: 'asc' }],
+      select: {
+        id: true,
+        userId: true,
+        title: true,
+        destination: true,
+        startDate: true,
+        endDate: true,
+        status: true,
+        createdAt: true,
+        updatedAt: true
+      }
+    });
+  }
+
   async findTripById(tripId: string): Promise<TripWithEvents | null> {
     return this.prisma.trip.findUnique({
       where: { id: tripId },
@@ -55,7 +75,10 @@ export class PrismaTripRepository implements TripRepository {
     });
   }
 
-  async findSafetyBriefByTripId(tripId: string): Promise<TripSafetyBriefRecord | null> {
+  async findSafetyBriefByTripId(
+    tripId: string,
+    currentDate: Date
+  ): Promise<TripSafetyBriefRecord | null> {
     return this.prisma.trip.findUnique({
       where: { id: tripId },
       select: {
@@ -69,13 +92,71 @@ export class PrismaTripRepository implements TripRepository {
           orderBy: {
             occurredAt: 'desc'
           },
-          take: 1,
+          take: 5,
           select: {
             id: true,
             eventType: true,
             title: true,
             description: true,
             occurredAt: true
+          }
+        },
+        consents: {
+          where: {
+            status: ConsentStatus.ACTIVE,
+            validFrom: {
+              lte: currentDate
+            },
+            validUntil: {
+              gt: currentDate
+            },
+            OR: [
+              {
+                guardianInvite: {
+                  is: null
+                }
+              },
+              {
+                guardianInvite: {
+                  is: {
+                    status: GuardianInviteStatus.ACCEPTED
+                  }
+                }
+              }
+            ]
+          },
+          select: {
+            id: true,
+            shareScopes: true,
+            validFrom: true,
+            validUntil: true,
+            guardian: {
+              select: {
+                id: true,
+                fullName: true,
+                relationship: true,
+                isPrimary: true
+              }
+            }
+          }
+        },
+        checkInRules: {
+          where: {
+            status: {
+              in: [CheckInRuleStatus.PENDING, CheckInRuleStatus.ESCALATED]
+            }
+          },
+          orderBy: {
+            expectedAt: 'asc'
+          },
+          take: 3,
+          select: {
+            id: true,
+            title: true,
+            expectedEventType: true,
+            expectedAt: true,
+            status: true,
+            graceMinutes: true
           }
         }
       }
