@@ -1,0 +1,18 @@
+import { Router } from 'express';
+
+import { prisma } from '../../infrastructure/database/prisma/client';
+import { ForHerSafetyScoreController } from './forher-safety-score.controller';
+import { PrismaForHerSafetyScoreRepository } from './forher-safety-score.prisma.repository';
+import { ForHerSafetyScoreService } from './forher-safety-score.service';
+
+export const buildForHerSafetyScoreRouter = (): Router => {
+  const router = Router();
+
+  const repository = new PrismaForHerSafetyScoreRepository(prisma);
+  const service = new ForHerSafetyScoreService(repository);
+  const controller = new ForHerSafetyScoreController(service);
+
+  router.get('/trips/:tripId/safety-score', controller.getTripSafetyScore);
+
+  return router;
+};

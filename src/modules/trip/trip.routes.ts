@@ -2,6 +2,8 @@ import { Router } from 'express';
 
 import { prisma } from '../../infrastructure/database/prisma/client';
 import { TwilioService } from '../../infrastructure/communications/twilio/twilio.service';
+import { PrismaForHerCheckInRepository } from '../forher-check-in/forher-check-in.prisma.repository';
+import { ForHerCheckInService } from '../forher-check-in/forher-check-in.service';
 import { OpenAiSafetyBriefService } from '../../infrastructure/llm/openai/openai-safety-brief.service';
 import { NotificationService } from '../notification/notification.service';
 import { PrismaTripEventNotificationRepository } from '../trip-event-notification/trip-event-notification.prisma.repository';
@@ -17,6 +19,11 @@ export const buildTripRouter = (): Router => {
   const twilioService = new TwilioService();
   const notificationService = new NotificationService(twilioService);
   const safetyBriefLlmService = new OpenAiSafetyBriefService();
+  const forHerCheckInRepository = new PrismaForHerCheckInRepository(prisma);
+  const forHerCheckInService = new ForHerCheckInService(
+    forHerCheckInRepository,
+    notificationService
+  );
   const tripEventNotificationRepository = new PrismaTripEventNotificationRepository(prisma);
   const tripEventNotificationHandler = new TripEventNotificationHandlerService(
     tripEventNotificationRepository,
@@ -25,7 +32,8 @@ export const buildTripRouter = (): Router => {
   const tripService = new TripService(
     tripRepository,
     tripEventNotificationHandler,
-    safetyBriefLlmService
+    safetyBriefLlmService,
+    forHerCheckInService
   );
   const tripController = new TripController(tripService);
 

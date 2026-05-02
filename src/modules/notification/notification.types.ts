@@ -6,9 +6,11 @@ export interface NotificationRecipient {
 }
 
 export interface TripEventNotificationPayload {
+  headline?: string;
   eventType: string;
   tripTitle: string;
   timestamp: string;
+  lastEventSummary?: string | null;
 }
 
 export interface SendTripEventNotificationInput {

@@ -13,6 +13,7 @@ export const buildTripSharingRouter = (): Router => {
   const tripSharingController = new TripSharingController(tripSharingService);
 
   router.post('/:tripId/share', tripSharingController.createConsent);
+  router.get('/:tripId/trust-log', tripSharingController.getTrustLog);
 
   return router;
 };

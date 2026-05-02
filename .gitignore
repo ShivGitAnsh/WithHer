@@ -1,6 +1,7 @@
 node_modules
 dist
 .env
+.env.example
 # Local-only Twilio scratch script (do not commit numbers / tokens)
 test-whatsapp.ts
 .DS_Store

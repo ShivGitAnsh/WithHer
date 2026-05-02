@@ -8,17 +8,31 @@ datasource db {
 }
 
 model User {
-  id          String     @id @default(cuid())
-  email       String     @unique
-  fullName    String
-  phoneNumber String?    @unique
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-  consents    Consent[]
-  guardians   Guardian[]
-  trips       Trip[]
+  id               String            @id @default(cuid())
+  email            String            @unique
+  fullName         String
+  phoneNumber      String?           @unique
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  consents         Consent[]
+  emergencyContacts EmergencyContact[]
+  guardians        Guardian[]
+  matchProfiles    MatchProfile[]
+  trips            Trip[]
+  forHerPreference ForHerPreference?
 
   @@index([createdAt])
+}
+
+model ForHerPreference {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  enabled   Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([enabled])
 }
 
 model Trip {
@@ -32,6 +46,11 @@ model Trip {
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
   consents    Consent[]
+  consentAuditLogs ConsentAuditLog[]
+  checkInRules CheckInRule[]
+  guardianInvites GuardianInvite[]
+  itineraryPlans ItineraryPlan[]
+  matchProfiles MatchProfile[]
   user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   events      TripEvent[]
 
@@ -39,6 +58,80 @@ model Trip {
   @@index([status])
   @@index([startDate, endDate])
   @@index([userId, startDate])
+}
+
+model MatchProfile {
+  id              String             @id @default(cuid())
+  userId          String
+  tripId          String
+  displayName     String
+  city            String?
+  travelStyle     String?
+  hotelPreference String?
+  interests       String[]
+  status          MatchProfileStatus @default(ACTIVE)
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  user            User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  trip            Trip               @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  sentConnections MatchConnection[]  @relation("MatchConnectionSource")
+  receivedConnections MatchConnection[] @relation("MatchConnectionTarget")
+
+  @@unique([tripId])
+  @@index([userId, status])
+  @@index([tripId, status])
+}
+
+model MatchConnection {
+  id              String                @id @default(cuid())
+  sourceProfileId String
+  targetProfileId String
+  status          MatchConnectionStatus @default(PENDING)
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+  sourceProfile   MatchProfile          @relation("MatchConnectionSource", fields: [sourceProfileId], references: [id], onDelete: Cascade)
+  targetProfile   MatchProfile          @relation("MatchConnectionTarget", fields: [targetProfileId], references: [id], onDelete: Cascade)
+
+  @@unique([sourceProfileId, targetProfileId])
+  @@index([targetProfileId, status])
+}
+
+model CheckInRule {
+  id                String            @id @default(cuid())
+  tripId            String
+  title             String
+  expectedEventType TripEventType
+  expectedAt        DateTime
+  graceMinutes      Int               @default(30)
+  status            CheckInRuleStatus @default(PENDING)
+  lastEvaluatedAt   DateTime?
+  escalatedAt       DateTime?
+  completedAt       DateTime?
+  completedEventId  String?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  trip              Trip              @relation(fields: [tripId], references: [id], onDelete: Cascade)
+
+  @@index([tripId, status])
+  @@index([expectedAt, status])
+  @@index([completedEventId])
+}
+
+model ItineraryPlan {
+  id             String   @id @default(cuid())
+  tripId         String?
+  destination    String
+  numberOfDays   Int
+  travelersCount Int      @default(1)
+  title          String
+  overview       String
+  generatedPlan  Json
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  trip           Trip?    @relation(fields: [tripId], references: [id], onDelete: SetNull)
+
+  @@index([tripId, createdAt])
+  @@index([destination, createdAt])
 }
 
 model TripEvent {
@@ -68,6 +161,8 @@ model Guardian {
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
   consents     Consent[]
+  guardianInvites GuardianInvite[]
+  consentAuditLogs ConsentAuditLog[]
   user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, email])
@@ -86,8 +181,11 @@ model Consent {
   validFrom   DateTime
   validUntil  DateTime
   revokedAt   DateTime?
+  revokedReason String?
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
+  auditLogs   ConsentAuditLog[]
+  guardianInvite GuardianInvite?
   guardian    Guardian      @relation(fields: [guardianId], references: [id], onDelete: Cascade)
   trip        Trip?         @relation(fields: [tripId], references: [id], onDelete: Cascade)
   user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -98,6 +196,63 @@ model Consent {
   @@index([status])
   @@index([validFrom, validUntil])
   @@index([userId, guardianId, status])
+}
+
+model ConsentAuditLog {
+  id         String                 @id @default(cuid())
+  consentId  String
+  tripId     String?
+  guardianId String?
+  actorType  ConsentAuditActorType
+  action     ConsentAuditAction
+  message    String
+  metadata   Json?
+  createdAt  DateTime               @default(now())
+  consent    Consent                @relation(fields: [consentId], references: [id], onDelete: Cascade)
+  trip       Trip?                  @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  guardian   Guardian?              @relation(fields: [guardianId], references: [id], onDelete: SetNull)
+
+  @@index([consentId, createdAt])
+  @@index([tripId, createdAt])
+  @@index([guardianId, createdAt])
+  @@index([action, createdAt])
+}
+
+model GuardianInvite {
+  id          String               @id @default(cuid())
+  consentId   String               @unique
+  guardianId  String
+  tripId      String
+  token       String               @unique
+  status      GuardianInviteStatus @default(PENDING)
+  expiresAt   DateTime
+  acceptedAt  DateTime?
+  declinedAt  DateTime?
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+  consent     Consent              @relation(fields: [consentId], references: [id], onDelete: Cascade)
+  guardian    Guardian             @relation(fields: [guardianId], references: [id], onDelete: Cascade)
+  trip        Trip                 @relation(fields: [tripId], references: [id], onDelete: Cascade)
+
+  @@index([guardianId, status])
+  @@index([tripId, status])
+  @@index([expiresAt, status])
+}
+
+model EmergencyContact {
+  id           String   @id @default(cuid())
+  userId       String
+  fullName     String
+  relationship String
+  phoneNumber  String
+  isPrimary    Boolean  @default(false)
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, isPrimary])
 }
 
 enum TripStatus {
@@ -135,4 +290,43 @@ enum ShareScope {
   CHECK_IN_UPDATES
   EMERGENCY_CONTACTS
   SOS_ALERTS
+}
+
+enum CheckInRuleStatus {
+  PENDING
+  COMPLETED
+  ESCALATED
+  CANCELLED
+}
+
+enum GuardianInviteStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  EXPIRED
+}
+
+enum MatchProfileStatus {
+  ACTIVE
+  PAUSED
+}
+
+enum MatchConnectionStatus {
+  PENDING
+  CONNECTED
+  DECLINED
+}
+
+enum ConsentAuditActorType {
+  TRAVELLER
+  GUARDIAN
+  SYSTEM
+}
+
+enum ConsentAuditAction {
+  CONSENT_CREATED
+  INVITE_CREATED
+  INVITE_ACCEPTED
+  INVITE_EXPIRED
+  CONSENT_REVOKED
 }

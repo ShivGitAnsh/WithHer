@@ -1,4 +1,10 @@
-import { ConsentStatus, type PrismaClient, type Trip, type TripEvent } from '@prisma/client';
+import {
+  ConsentStatus,
+  GuardianInviteStatus,
+  type PrismaClient,
+  type Trip,
+  type TripEvent
+} from '@prisma/client';
 
 import type { TripRepository } from './trip.repository';
 import type {
@@ -114,7 +120,21 @@ export class PrismaTripRepository implements TripRepository {
             },
             validUntil: {
               gt: currentDate
-            }
+            },
+            OR: [
+              {
+                guardianInvite: {
+                  is: null
+                }
+              },
+              {
+                guardianInvite: {
+                  is: {
+                    status: GuardianInviteStatus.ACCEPTED
+                  }
+                }
+              }
+            ]
           },
           select: {
             id: true,

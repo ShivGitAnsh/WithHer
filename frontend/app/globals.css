@@ -1,0 +1,105 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 210 20% 98%;
+    --foreground: 222 24% 14%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 24% 14%;
+    --primary: 192 77% 33%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 24% 96%;
+    --secondary-foreground: 220 16% 24%;
+    --muted: 210 20% 95%;
+    --muted-foreground: 220 11% 44%;
+    --accent: 334 55% 95%;
+    --accent-foreground: 334 28% 26%;
+    --border: 214 20% 89%;
+    --input: 214 20% 89%;
+    --ring: 192 77% 33%;
+    --sidebar: 0 0% 100%;
+    --sidebar-foreground: 222 24% 14%;
+    --sidebar-border: 214 20% 89%;
+    --rose-mist: 336 30% 96%;
+    --rose-cloud: 336 28% 92%;
+    --petal: 335 34% 85%;
+    --blush: 334 72% 70%;
+    --cocoa: 222 14% 33%;
+    --plum-ink: 222 24% 14%;
+    --sage: 156 24% 92%;
+    --coral-glow: 334 62% 66%;
+    --safe: 150 61% 33%;
+    --safe-surface: 148 45% 95%;
+    --caution: 39 92% 45%;
+    --caution-surface: 45 100% 95%;
+    --danger: 4 100% 59%;
+    --danger-surface: 8 100% 97%;
+    --shadow-panel: 0 24px 60px rgba(15, 23, 42, 0.08);
+    --shadow-float: 0 16px 36px rgba(15, 23, 42, 0.12);
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    background-image:
+      radial-gradient(circle at top left, rgba(186, 230, 253, 0.26), transparent 24%),
+      radial-gradient(circle at top right, rgba(255, 255, 255, 0.68), transparent 22%),
+      linear-gradient(180deg, #f8fafc 0%, #f1f5f9 52%, #f8fafc 100%);
+    min-height: 100vh;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-sans tracking-tight text-plumInk;
+  }
+}
+
+@layer components {
+  .forher-mode {
+    --accent: 336 62% 95%;
+    --accent-foreground: 332 26% 28%;
+    --border: 330 22% 88%;
+    --input: 330 22% 88%;
+    --rose-mist: 336 34% 96%;
+    --rose-cloud: 338 32% 93%;
+    --petal: 334 38% 86%;
+    --blush: 334 72% 70%;
+    --coral-glow: 334 62% 66%;
+    --shadow-panel: 0 24px 60px rgba(90, 49, 71, 0.08);
+    --shadow-float: 0 16px 36px rgba(120, 72, 94, 0.14);
+    background-image:
+      radial-gradient(circle at top left, rgba(255, 228, 236, 0.28), transparent 24%),
+      radial-gradient(circle at top right, rgba(230, 230, 250, 0.22), transparent 22%),
+      linear-gradient(180deg, #fbfbfd 0%, #f8f6fa 52%, #fbfbfd 100%);
+  }
+
+  .page-shell {
+    @apply mx-auto max-w-7xl px-4 sm:px-6 lg:px-8;
+  }
+
+  .nav-shell {
+    @apply rounded-[1.75rem] border border-white/80 bg-white/70 shadow-panel backdrop-blur-xl;
+  }
+
+  .hero-panel {
+    background-image:
+      radial-gradient(circle at 10% 10%, rgba(186, 230, 253, 0.3), transparent 28%),
+      radial-gradient(circle at 88% 14%, rgba(255, 255, 255, 0.68), transparent 24%),
+      linear-gradient(135deg, rgba(255, 255, 255, 0.82), rgba(241, 245, 249, 0.92));
+  }
+
+  .eyebrow {
+    @apply text-[11px] font-semibold uppercase tracking-[0.28em] text-slate-400;
+  }
+}

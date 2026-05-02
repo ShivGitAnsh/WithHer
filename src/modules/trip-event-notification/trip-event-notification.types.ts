@@ -1,4 +1,4 @@
-import { ConsentStatus, type Consent, type Guardian, type Trip, type TripEvent } from '@prisma/client';
+import type { Consent, Guardian, Trip, TripEvent } from '@prisma/client';
 
 import type { NotificationRecipient, TripEventNotificationPayload } from '../notification/notification.types';
 
@@ -8,7 +8,7 @@ export interface TripNotificationContext {
 }
 
 export interface ActiveTripConsent extends Pick<Consent, 'id' | 'guardianId' | 'tripId' | 'status' | 'validFrom' | 'validUntil'> {
-  status: ConsentStatus.ACTIVE;
+  status: 'ACTIVE';
 }
 
 export type GuardianRecipientRecord = Pick<

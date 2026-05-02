@@ -60,11 +60,18 @@ export class NotificationService {
       hour12: true
     }).format(new Date(payload.timestamp));
 
-    return [
-      '🚨 Travel Update',
+    const messageLines = [
+      payload.headline ?? '🚨 Travel Update',
       `Event: ${payload.eventType}`,
-      `Trip: ${payload.tripTitle}`,
-      `Time: ${formattedTime}`
-    ].join('\n');
+      `Trip: ${payload.tripTitle}`
+    ];
+
+    if (payload.lastEventSummary) {
+      messageLines.push(`Last Update: ${payload.lastEventSummary}`);
+    }
+
+    messageLines.push(`Time: ${formattedTime}`);
+
+    return messageLines.join('\n');
   }
 }

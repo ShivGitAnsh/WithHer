@@ -4,13 +4,22 @@ import { env } from './config/env';
 import { logger } from './config/logger';
 import { prisma } from './infrastructure/database/prisma/client';
 import { createApp } from './app';
+import { createForHerCheckInService } from './modules/forher-check-in/forher-check-in.factory';
+import { ForHerCheckInScheduler } from './modules/forher-check-in/forher-check-in.scheduler';
 
 const app = createApp();
+const checkInScheduler = new ForHerCheckInScheduler(createForHerCheckInService(), {
+  enabled: env.CHECK_IN_SCHEDULER_ENABLED,
+  intervalMs: env.CHECK_IN_SCHEDULER_INTERVAL_MS,
+  batchSize: env.CHECK_IN_SCHEDULER_BATCH_SIZE
+});
 
 let server: Server;
 
 const startServer = async (): Promise<void> => {
   try {
+    checkInScheduler.start();
+
     server = app.listen(env.PORT, () => {
       logger.info(
         {
@@ -42,6 +51,7 @@ const shutdown = async (signal: NodeJS.Signals): Promise<void> => {
     });
   }
 
+  await checkInScheduler.stop();
   await prisma.$disconnect();
   process.exit(0);
 };

@@ -3,6 +3,7 @@ import { TripStatus, type Trip, type TripEvent } from '@prisma/client';
 
 import { logger } from '../../config/logger';
 import { AppError } from '../../shared/errors/app-error';
+import type { ForHerCheckInService } from '../forher-check-in/forher-check-in.service';
 import type { TripEventNotificationHandler } from '../trip-event-notification/trip-event-notification.types';
 import type { TripRepository } from './trip.repository';
 import type {
@@ -18,7 +19,8 @@ export class TripService {
   constructor(
     private readonly tripRepository: TripRepository,
     private readonly tripEventNotificationHandler?: TripEventNotificationHandler,
-    private readonly safetyBriefLlmService?: SafetyBriefLlmService
+    private readonly safetyBriefLlmService?: SafetyBriefLlmService,
+    private readonly forHerCheckInService?: ForHerCheckInService
   ) {}
 
   async createTrip(input: CreateTripInput): Promise<Trip> {
@@ -157,6 +159,19 @@ export class TripService {
           },
           'Failed to process trip event notifications'
         );
+    }
+
+    try {
+      await this.forHerCheckInService?.completeMatchingRulesForEvent(tripEvent);
+    } catch (error) {
+      logger.error(
+        {
+          err: error,
+          tripEventId: tripEvent.id,
+          tripId
+        },
+        'Failed to complete matching check-in rules for trip event'
+      );
     }
 
     return tripEvent;

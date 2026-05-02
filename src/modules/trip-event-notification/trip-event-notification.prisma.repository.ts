@@ -1,4 +1,4 @@
-import { ConsentStatus, type PrismaClient } from '@prisma/client';
+import { ConsentStatus, GuardianInviteStatus, type PrismaClient } from '@prisma/client';
 
 import type {
   ActiveTripConsent,
@@ -59,7 +59,21 @@ export class PrismaTripEventNotificationRepository
         },
         validUntil: {
           gt: currentDate
-        }
+        },
+        OR: [
+          {
+            guardianInvite: {
+              is: null
+            }
+          },
+          {
+            guardianInvite: {
+              is: {
+                status: GuardianInviteStatus.ACCEPTED
+              }
+            }
+          }
+        ]
       },
       select: {
         id: true,

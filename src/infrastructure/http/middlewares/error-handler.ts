@@ -4,6 +4,7 @@ import { StatusCodes } from 'http-status-codes';
 import { env } from '../../../config/env';
 import { logger } from '../../../config/logger';
 import { AppError } from '../../../shared/errors/app-error';
+import { mapPrismaErrorToAppError } from '../../../shared/errors/map-prisma-error';
 
 export const errorHandler = (
   error: Error,
@@ -19,6 +20,17 @@ export const errorHandler = (
       }
     });
 
+    return;
+  }
+
+  const prismaMapped = mapPrismaErrorToAppError(error);
+  if (prismaMapped) {
+    response.status(prismaMapped.statusCode).json({
+      error: {
+        message: prismaMapped.message,
+        code: prismaMapped.code
+      }
+    });
     return;
   }
 
