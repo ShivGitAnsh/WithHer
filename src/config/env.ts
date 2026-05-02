@@ -45,7 +45,7 @@ const envSchema = z
     API_PREFIX: z.string().min(1).default('/api/v1'),
     DATABASE_URL: z.string().url(),
     CORS_ORIGIN: z.string().min(1).default('*'),
-    OPENAI_API_KEY: optionalString,
+    GEMINI_API_KEY: optionalString,
     TWILIO_ACCOUNT_SID: optionalString,
     TWILIO_AUTH_TOKEN: optionalString,
     TWILIO_WHATSAPP_NUMBER: optionalString,

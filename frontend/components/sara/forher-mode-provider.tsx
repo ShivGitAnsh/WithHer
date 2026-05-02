@@ -143,7 +143,7 @@ export function ForHerModeSwitch({
         className={cn(
           'flex flex-col gap-4 rounded-[1.6rem] border px-5 py-5 transition-all sm:flex-row sm:items-center sm:justify-between',
           enabled
-            ? 'border-[rgba(255,107,154,0.22)] bg-[linear-gradient(135deg,rgba(255,255,255,0.96),rgba(255,244,248,0.9))]'
+            ? 'border-[rgba(0,140,255,0.18)] bg-[linear-gradient(135deg,rgba(255,255,255,0.96),rgba(244,249,255,0.94))]'
             : 'border-border/70 bg-slate-50/80'
         )}
       >
@@ -158,7 +158,7 @@ export function ForHerModeSwitch({
               </p>
               <p className="text-sm text-slate-500">
                 {enabled
-                  ? 'Softened accents and warmer cues are active.'
+                  ? 'Softer travel accents are active while the product layout stays the same.'
                   : 'Standard SARA theme is currently active.'}
               </p>
             </div>
@@ -220,7 +220,7 @@ function SwitchButton({
         'relative inline-flex items-center rounded-full border transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60',
         compact ? 'h-11 w-20 px-3' : 'h-12 w-24 px-3.5',
         enabled
-          ? 'border-[rgba(255,107,154,0.3)] bg-[linear-gradient(135deg,rgba(255,107,154,0.92),rgba(168,139,250,0.92))] shadow-float'
+          ? 'border-[rgba(0,140,255,0.28)] bg-[linear-gradient(135deg,#ff7b42_0%,#0a58ca_42%,#008cff_100%)] shadow-float'
           : 'border-border/70 bg-white shadow-sm'
       )}
     >

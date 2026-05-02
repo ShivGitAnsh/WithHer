@@ -47,11 +47,19 @@ export default {
         cocoa: 'hsl(var(--cocoa) / <alpha-value>)',
         plumInk: 'hsl(var(--plum-ink) / <alpha-value>)',
         sage: 'hsl(var(--sage) / <alpha-value>)',
-        coralGlow: 'hsl(var(--coral-glow) / <alpha-value>)'
+        coralGlow: 'hsl(var(--coral-glow) / <alpha-value>)',
+        mmtBlue: 'hsl(var(--mmt-blue) / <alpha-value>)',
+        mmtBlueDeep: 'hsl(var(--mmt-blue-deep) / <alpha-value>)',
+        mmtCyan: 'hsl(var(--mmt-cyan) / <alpha-value>)',
+        mmtOrange: 'hsl(var(--mmt-orange) / <alpha-value>)',
+        mmtOrangeSoft: 'hsl(var(--mmt-orange-soft) / <alpha-value>)',
+        mmtRed: 'hsl(var(--mmt-red) / <alpha-value>)',
+        mmtYellow: 'hsl(var(--mmt-yellow) / <alpha-value>)'
       },
       boxShadow: {
         panel: 'var(--shadow-panel)',
-        float: 'var(--shadow-float)'
+        float: 'var(--shadow-float)',
+        cta: 'var(--shadow-cta)'
       },
       borderRadius: {
         xl: '1rem',
@@ -60,6 +68,8 @@ export default {
       },
       fontFamily: {
         sans: [
+          'Poppins',
+          'Inter',
           'ui-sans-serif',
           'system-ui',
           '-apple-system',

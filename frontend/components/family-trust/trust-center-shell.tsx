@@ -10,8 +10,8 @@ export function TrustCenterShell({
   className?: string;
 }) {
   return (
-    <main className="min-h-screen px-4 py-5 lg:px-8 lg:py-7">
-      <div className={cn('dashboard-surface mx-auto max-w-7xl', className)}>
+    <main className="min-h-[calc(100vh-6rem)] w-full py-2 sm:py-4">
+      <div className={cn('dashboard-surface', className)}>
         {children}
       </div>
     </main>

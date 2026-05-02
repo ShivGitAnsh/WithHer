@@ -12,10 +12,10 @@ export function DashboardShell({
   forHerEnabled?: boolean;
 }) {
   return (
-    <main className="min-h-screen px-4 py-5 lg:px-8 lg:py-7">
+    <main className="min-h-[calc(100vh-6rem)] w-full py-2 sm:py-4">
       <div
         className={cn(
-          'dashboard-surface mx-auto grid max-w-7xl gap-6 lg:grid-cols-[290px_minmax(0,1fr)]',
+          'dashboard-surface grid gap-6 lg:grid-cols-[290px_minmax(0,1fr)]',
           forHerEnabled && 'forher-mode'
         )}
       >

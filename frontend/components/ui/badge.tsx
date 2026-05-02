@@ -8,9 +8,9 @@ const badgeVariants = cva(
   {
     variants: {
       variant: {
-        default: 'bg-primary text-primary-foreground',
-        secondary: 'bg-secondary text-secondary-foreground',
-        outline: 'border border-border bg-white/80 text-foreground',
+        default: 'bg-[rgba(0,140,255,0.12)] text-[hsl(var(--mmt-blue-deep))]',
+        secondary: 'bg-[rgba(7,65,146,0.08)] text-[hsl(var(--secondary-foreground))]',
+        outline: 'border border-border bg-white/90 text-foreground',
         success: 'bg-[hsl(var(--safe-surface))] text-[hsl(var(--safe))]',
         caution: 'bg-[hsl(var(--caution-surface))] text-[hsl(var(--caution))]',
         danger: 'bg-[hsl(var(--danger-surface))] text-[hsl(var(--danger))]'

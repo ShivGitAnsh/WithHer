@@ -91,7 +91,7 @@ export function ForHerToggle({
       className={cn(
         'flex flex-col gap-4 rounded-[1.75rem] border px-5 py-4 shadow-panel transition-all sm:flex-row sm:items-center sm:justify-between',
         enabled
-          ? 'border-petal bg-[linear-gradient(135deg,rgba(255,255,255,0.96),rgba(251,245,248,0.96))]'
+          ? 'border-[rgba(0,140,255,0.18)] bg-[linear-gradient(135deg,rgba(255,255,255,0.98),rgba(244,249,255,0.98))]'
           : 'border-border bg-white/92'
       )}
     >
@@ -108,7 +108,7 @@ export function ForHerToggle({
             className={cn(
               'px-3 py-1',
               enabled
-                ? 'bg-accent text-accent-foreground'
+                ? 'bg-[rgba(0,140,255,0.12)] text-[hsl(var(--mmt-blue-deep))]'
                 : 'border-border bg-white/70 text-muted-foreground'
             )}
           >
@@ -138,7 +138,7 @@ export function ForHerToggle({
         className={cn(
           'relative inline-flex h-12 w-24 items-center rounded-full border transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60',
           enabled
-            ? 'border-petal bg-[linear-gradient(135deg,hsl(var(--primary)),hsl(var(--coral-glow)))] shadow-float'
+            ? 'border-[rgba(0,140,255,0.24)] bg-[linear-gradient(97deg,#ff7b42_0%,#0a58ca_42%,#008cff_100%)] shadow-float'
             : 'border-border bg-secondary'
         )}
       >

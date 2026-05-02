@@ -12,7 +12,7 @@ export default async function ExplorePage() {
 
   return (
     <div className="space-y-12 pb-8">
-      <section className="hero-panel overflow-hidden rounded-[2rem] border border-white/70 px-6 py-7 shadow-panel sm:px-8 sm:py-9 lg:px-10 lg:py-11">
+      <section className="hero-panel overflow-hidden rounded-[2rem] border border-white/70 px-6 py-7 shadow-[0_24px_54px_rgba(4,24,52,0.22)] sm:px-8 sm:py-9 lg:px-10 lg:py-11">
         <div className="grid gap-8 lg:grid-cols-[1.15fr_0.85fr] lg:items-end">
           <div className="space-y-6">
             <div className="space-y-4">
@@ -28,13 +28,13 @@ export default async function ExplorePage() {
               </div>
             </div>
 
-            <div className="rounded-[1.75rem] bg-white/88 p-3 shadow-[0_20px_45px_rgba(15,23,42,0.08)] backdrop-blur">
+            <div className="rounded-[1.75rem] bg-white/92 p-3 shadow-[0_20px_45px_rgba(6,24,44,0.2)] backdrop-blur">
               <div className="grid gap-3 md:grid-cols-[1.25fr_0.95fr_0.6fr_auto]">
                 <SearchField label="Where to?" value="Goa" />
                 <SearchField label="Dates" value="May 12 - May 16" />
                 <SearchField label="Trip type" value="Solo" />
                 <Button
-                  variant="destructive"
+                  variant="default"
                   size="lg"
                   className="h-14 rounded-[1.35rem] px-6"
                 >
@@ -50,8 +50,8 @@ export default async function ExplorePage() {
             </div>
           </div>
 
-          <div className="rounded-[2rem] border border-white/70 bg-white/60 p-4 shadow-panel backdrop-blur">
-            <div className="relative overflow-hidden rounded-[1.6rem] bg-[linear-gradient(135deg,#0f766e_0%,#155e75_48%,#f8fafc_100%)] px-6 py-7 text-white">
+          <div className="rounded-[2rem] border border-white/70 bg-white/65 p-4 shadow-panel backdrop-blur">
+            <div className="relative overflow-hidden rounded-[1.6rem] bg-[linear-gradient(135deg,#03214a_0%,#0a58ca_48%,#18b8ff_100%)] px-6 py-7 text-white">
               <div className="absolute inset-y-0 right-0 w-1/2 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.28),transparent_55%)]" />
               <div className="relative space-y-6">
                 <div className="flex flex-wrap gap-2">
@@ -316,7 +316,7 @@ function QuickAction({
       href={href}
       className={cn(
         buttonVariants({
-          variant: secondary ? 'outline' : 'destructive',
+          variant: secondary ? 'outline' : 'default',
           size: 'lg',
           className: 'rounded-[1.15rem] px-5'
         })

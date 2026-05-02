@@ -11,6 +11,16 @@
       "static/chunks/main-app.js",
       "static/chunks/app/loading.js"
     ],
+    "/my-trips/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/my-trips/page.js"
+    ],
+    "/safety/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/safety/page.js"
+    ],
     "/guardians/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
@@ -21,15 +31,25 @@
       "static/chunks/main-app.js",
       "static/chunks/app/page.js"
     ],
-    "/my-trips/page": [
+    "/trips/[tripId]/loading": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/my-trips/page.js"
+      "static/chunks/app/trips/[tripId]/loading.js"
     ],
-    "/safety/page": [
+    "/trips/[tripId]/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/safety/page.js"
+      "static/chunks/app/trips/[tripId]/page.js"
+    ],
+    "/family-trust/loading": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/family-trust/loading.js"
+    ],
+    "/family-trust/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/family-trust/page.js"
     ]
   }
 }

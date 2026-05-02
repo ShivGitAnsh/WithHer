@@ -4,40 +4,48 @@
 
 @layer base {
   :root {
-    --background: 210 20% 98%;
-    --foreground: 222 24% 14%;
+    --background: 214 42% 97%;
+    --foreground: 218 40% 14%;
     --card: 0 0% 100%;
-    --card-foreground: 222 24% 14%;
-    --primary: 192 77% 33%;
+    --card-foreground: 218 40% 14%;
+    --primary: 214 100% 43%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 210 24% 96%;
-    --secondary-foreground: 220 16% 24%;
-    --muted: 210 20% 95%;
-    --muted-foreground: 220 11% 44%;
-    --accent: 334 55% 95%;
-    --accent-foreground: 334 28% 26%;
-    --border: 214 20% 89%;
-    --input: 214 20% 89%;
-    --ring: 192 77% 33%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 218 32% 22%;
+    --muted: 210 35% 95%;
+    --muted-foreground: 217 16% 42%;
+    --accent: 210 100% 96%;
+    --accent-foreground: 214 100% 34%;
+    --border: 214 30% 88%;
+    --input: 214 30% 88%;
+    --ring: 209 100% 50%;
     --sidebar: 0 0% 100%;
-    --sidebar-foreground: 222 24% 14%;
-    --sidebar-border: 214 20% 89%;
-    --rose-mist: 336 30% 96%;
-    --rose-cloud: 336 28% 92%;
-    --petal: 335 34% 85%;
-    --blush: 334 72% 70%;
-    --cocoa: 222 14% 33%;
-    --plum-ink: 222 24% 14%;
-    --sage: 156 24% 92%;
-    --coral-glow: 334 62% 66%;
-    --safe: 150 61% 33%;
-    --safe-surface: 148 45% 95%;
-    --caution: 39 92% 45%;
-    --caution-surface: 45 100% 95%;
-    --danger: 4 100% 59%;
-    --danger-surface: 8 100% 97%;
-    --shadow-panel: 0 24px 60px rgba(15, 23, 42, 0.08);
-    --shadow-float: 0 16px 36px rgba(15, 23, 42, 0.12);
+    --sidebar-foreground: 218 40% 14%;
+    --sidebar-border: 214 30% 88%;
+    --rose-mist: 26 100% 97%;
+    --rose-cloud: 208 78% 94%;
+    --petal: 20 100% 87%;
+    --blush: 16 92% 61%;
+    --cocoa: 216 20% 34%;
+    --plum-ink: 218 40% 14%;
+    --sage: 198 58% 93%;
+    --coral-glow: 16 92% 61%;
+    --safe: 152 70% 32%;
+    --safe-surface: 150 60% 95%;
+    --caution: 32 95% 48%;
+    --caution-surface: 40 100% 95%;
+    --danger: 358 84% 53%;
+    --danger-surface: 4 100% 97%;
+    --mmt-blue: 214 100% 43%;
+    --mmt-blue-deep: 218 87% 18%;
+    --mmt-cyan: 209 100% 50%;
+    --mmt-orange: 24 100% 57%;
+    --mmt-orange-soft: 16 92% 61%;
+    --mmt-red: 358 84% 53%;
+    --mmt-yellow: 41 100% 56%;
+    --shadow-panel: 0 18px 44px rgba(5, 29, 56, 0.08);
+    --shadow-float: 0 12px 28px rgba(5, 48, 104, 0.18);
+    --shadow-cta: 0 14px 28px rgba(0, 140, 255, 0.24);
   }
 
   * {
@@ -46,15 +54,20 @@
 
   html {
     scroll-behavior: smooth;
+    min-height: 100%;
   }
 
   body {
     @apply bg-background text-foreground antialiased;
+    font-family:
+      'Inter', ui-sans-serif, system-ui, -apple-system,
+      'Segoe UI', sans-serif;
     background-image:
-      radial-gradient(circle at top left, rgba(186, 230, 253, 0.26), transparent 24%),
-      radial-gradient(circle at top right, rgba(255, 255, 255, 0.68), transparent 22%),
-      linear-gradient(180deg, #f8fafc 0%, #f1f5f9 52%, #f8fafc 100%);
+      radial-gradient(circle at top left, rgba(33, 150, 243, 0.18), transparent 28%),
+      radial-gradient(circle at top right, rgba(0, 140, 255, 0.14), transparent 24%),
+      linear-gradient(180deg, #031223 0, #082447 8.5rem, #eef4fb 8.5rem, #f6f8fc 100%);
     min-height: 100vh;
+    overflow-x: hidden;
   }
 
   h1,
@@ -62,44 +75,84 @@
   h3,
   h4 {
     @apply font-sans tracking-tight text-plumInk;
+    font-weight: 600;
   }
 }
 
 @layer components {
   .forher-mode {
-    --accent: 336 62% 95%;
-    --accent-foreground: 332 26% 28%;
-    --border: 330 22% 88%;
-    --input: 330 22% 88%;
-    --rose-mist: 336 34% 96%;
-    --rose-cloud: 338 32% 93%;
-    --petal: 334 38% 86%;
-    --blush: 334 72% 70%;
-    --coral-glow: 334 62% 66%;
-    --shadow-panel: 0 24px 60px rgba(90, 49, 71, 0.08);
-    --shadow-float: 0 16px 36px rgba(120, 72, 94, 0.14);
+    --accent: 208 100% 96%;
+    --accent-foreground: 214 100% 34%;
+    --border: 210 36% 87%;
+    --input: 210 36% 87%;
+    --rose-mist: 26 100% 97%;
+    --rose-cloud: 208 66% 94%;
+    --petal: 20 100% 88%;
+    --blush: 16 92% 61%;
+    --coral-glow: 16 92% 61%;
+    --shadow-panel: 0 24px 60px rgba(7, 33, 66, 0.08);
+    --shadow-float: 0 16px 36px rgba(7, 77, 143, 0.16);
     background-image:
-      radial-gradient(circle at top left, rgba(255, 228, 236, 0.28), transparent 24%),
-      radial-gradient(circle at top right, rgba(230, 230, 250, 0.22), transparent 22%),
-      linear-gradient(180deg, #fbfbfd 0%, #f8f6fa 52%, #fbfbfd 100%);
+      radial-gradient(circle at top left, rgba(255, 224, 197, 0.24), transparent 24%),
+      radial-gradient(circle at top right, rgba(191, 231, 255, 0.2), transparent 22%),
+      linear-gradient(180deg, #fbfcfe 0%, #f5f8fd 52%, #fbfcfe 100%);
   }
 
   .page-shell {
-    @apply mx-auto max-w-7xl px-4 sm:px-6 lg:px-8;
+    @apply mx-auto w-full max-w-[86rem] px-4 sm:px-6 lg:px-8;
   }
 
   .nav-shell {
-    @apply rounded-[1.75rem] border border-white/80 bg-white/70 shadow-panel backdrop-blur-xl;
+    @apply rounded-[1.75rem] border border-white/80 bg-white/95 shadow-[0_18px_46px_rgba(7,31,62,0.16)] backdrop-blur-xl;
   }
 
   .hero-panel {
     background-image:
-      radial-gradient(circle at 10% 10%, rgba(186, 230, 253, 0.3), transparent 28%),
-      radial-gradient(circle at 88% 14%, rgba(255, 255, 255, 0.68), transparent 24%),
-      linear-gradient(135deg, rgba(255, 255, 255, 0.82), rgba(241, 245, 249, 0.92));
+      radial-gradient(circle at 12% 18%, rgba(255, 255, 255, 0.16), transparent 32%),
+      radial-gradient(circle at 92% 12%, rgba(33, 207, 255, 0.3), transparent 36%),
+      linear-gradient(113deg, #02162c 0%, #06346d 34%, #0a58ca 76%, #18b8ff 100%);
+    color: #ffffff;
+  }
+
+  .hero-panel h1,
+  .hero-panel h2,
+  .hero-panel h3,
+  .hero-panel h4 {
+    color: #ffffff;
+  }
+
+  .card-surface {
+    background-image:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.985), rgba(247, 250, 255, 0.965));
+    border-color: rgba(219, 228, 242, 0.95);
+    box-shadow: 0 18px 46px rgba(10, 36, 64, 0.08);
+  }
+
+  .soft-section {
+    @apply rounded-[1.5rem] border border-border/80 shadow-sm;
+    background-image:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(243, 248, 255, 0.98));
+  }
+
+  .pill-label {
+    @apply text-[11px] font-semibold uppercase tracking-[0.24em] text-[hsl(var(--mmt-blue))];
+  }
+
+  .dashboard-surface {
+    @apply w-full;
   }
 
   .eyebrow {
-    @apply text-[11px] font-semibold uppercase tracking-[0.28em] text-slate-400;
+    @apply text-[11px] font-semibold uppercase tracking-[0.28em] text-[hsl(var(--mmt-blue))];
+  }
+
+  .mmt-cta-orange {
+    background-image: linear-gradient(95deg, #0a58ca 0%, #008cff 100%);
+    color: #ffffff;
+    box-shadow: var(--shadow-cta);
+  }
+
+  .mmt-cta-orange:hover {
+    background-image: linear-gradient(95deg, #0b4fb6 0%, #0079db 100%);
   }
 }

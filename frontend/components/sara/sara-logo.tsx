@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 export function SaraLogo({ className }: { className?: string }) {
   return (
     <div className={cn('inline-flex items-center gap-3', className)}>
-      <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#0f766e_0%,#0f4c81_62%,#f9fafb_100%)] shadow-[0_12px_28px_rgba(15,118,110,0.22)]">
+      <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#032b66_0%,#0a58ca_62%,#18b8ff_100%)] shadow-[0_12px_28px_rgba(0,88,204,0.24)]">
         <svg
           aria-hidden="true"
           viewBox="0 0 32 32"
@@ -25,7 +25,7 @@ export function SaraLogo({ className }: { className?: string }) {
         </svg>
       </span>
       <div className="leading-none">
-        <span className="block text-sm font-semibold uppercase tracking-[0.28em] text-slate-500">
+        <span className="block text-sm font-semibold uppercase tracking-[0.28em] text-[hsl(var(--mmt-blue))]">
           Safety-Aware
         </span>
         <span className="mt-1 block text-xl font-semibold tracking-tight text-slate-950">

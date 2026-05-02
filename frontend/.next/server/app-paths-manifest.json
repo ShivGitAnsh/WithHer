@@ -1,6 +1,5 @@
 {
-  "/guardians/page": "app/guardians/page.js",
-  "/page": "app/page.js",
-  "/my-trips/page": "app/my-trips/page.js",
-  "/safety/page": "app/safety/page.js"
+  "/family-trust/page": "app/family-trust/page.js",
+  "/trips/[tripId]/page": "app/trips/[tripId]/page.js",
+  "/guardians/page": "app/guardians/page.js"
 }

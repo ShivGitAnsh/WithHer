@@ -19,8 +19,8 @@ export function SaraNavigation() {
   const pathname = usePathname();
 
   return (
-    <header className="sticky top-0 z-50 border-b border-white/60 bg-[rgba(248,250,252,0.78)] backdrop-blur-xl">
-      <div className="page-shell py-4">
+    <header className="sticky top-0 z-50 pt-4 sm:pt-5">
+      <div className="page-shell">
         <div className="nav-shell flex flex-col gap-4 px-4 py-4 sm:px-5">
           <div className="flex items-center justify-between gap-4">
             <Link href="/" className="shrink-0">
@@ -39,7 +39,7 @@ export function SaraNavigation() {
                       className={cn(
                         'rounded-full px-4 py-2 text-sm font-medium transition',
                         active
-                          ? 'bg-slate-900 text-white'
+                          ? 'bg-[linear-gradient(97deg,#0a58ca_0%,#008cff_100%)] text-white shadow-[0_10px_18px_rgba(0,140,255,0.22)]'
                           : 'text-slate-600 hover:bg-slate-100 hover:text-slate-950'
                       )}
                     >
@@ -53,7 +53,7 @@ export function SaraNavigation() {
             <div className="flex items-center gap-3">
               <ForHerModeSwitch />
               <Link href="/profile" className="shrink-0">
-                <Avatar className="h-11 w-11 border border-border/70 bg-white shadow-sm">
+                <Avatar className="h-11 w-11 border border-white/80 bg-white shadow-[0_10px_24px_rgba(7,31,62,0.12)]">
                   <AvatarFallback className="bg-white text-sm font-semibold text-slate-700">
                     SR
                   </AvatarFallback>
@@ -73,7 +73,7 @@ export function SaraNavigation() {
                   className={cn(
                     'shrink-0 rounded-full px-4 py-2 text-sm font-medium transition',
                     active
-                      ? 'bg-slate-900 text-white'
+                      ? 'bg-[linear-gradient(97deg,#0a58ca_0%,#008cff_100%)] text-white shadow-[0_10px_18px_rgba(0,140,255,0.22)]'
                       : 'bg-white/82 text-slate-600 hover:bg-slate-100 hover:text-slate-950'
                   )}
                 >
