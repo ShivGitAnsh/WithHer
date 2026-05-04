@@ -42,6 +42,13 @@ export class PrismaTripRepository implements TripRepository {
     });
   }
 
+  async findTripsByUserId(userId: string): Promise<Trip[]> {
+    return this.prisma.trip.findMany({
+      where: { userId },
+      orderBy: [{ startDate: 'desc' }, { createdAt: 'desc' }]
+    });
+  }
+
   async findTripById(tripId: string): Promise<TripWithEvents | null> {
     return this.prisma.trip.findUnique({
       where: { id: tripId },

@@ -21,7 +21,12 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/components/ui/use-toast';
 import { getApiErrorMessage } from '@/lib/api-error';
-import { connectMatch, optInToMatching, triggerSosAlert } from '@/lib/api';
+import {
+  connectMatch,
+  createTripEvent,
+  optInToMatching,
+  triggerSosAlert
+} from '@/lib/api';
 import {
   createCheckInRuleAction,
   evaluateCheckInRuleAction,
@@ -34,7 +39,8 @@ import type {
   DashboardPageData,
   EmergencyContact,
   MatchingCandidateData,
-  MatchingProfileData
+  MatchingProfileData,
+  TripEventType
 } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
@@ -55,6 +61,19 @@ const tripTabs: Array<{ id: DetailTab; label: string }> = [
   { id: 'timeline', label: 'Timeline' },
   { id: 'safety', label: 'Safety' },
   { id: 'guardians', label: 'Guardians' }
+];
+
+const tripEventTypes: TripEventType[] = [
+  'BOOKED',
+  'DEPARTED',
+  'ARRIVED',
+  'CHECKED_IN',
+  'CHECKED_OUT',
+  'TRANSIT',
+  'DELAYED',
+  'RETURN_STARTED',
+  'HOME_REACHED',
+  'CUSTOM'
 ];
 
 export function TripDetailClient({
@@ -83,11 +102,23 @@ export function TripDetailClient({
   const [isGeneratingItinerary, startItineraryGeneration] = useTransition();
   const [isGeneratingBrief, startBriefGeneration] = useTransition();
   const [isTriggeringSos, startSosTrigger] = useTransition();
+  const [isCreatingEvent, startEventCreation] = useTransition();
   const [checkInForm, setCheckInForm] = useState({
     title: 'Hotel arrival confirmation',
     expectedEventType: 'CHECKED_IN',
     expectedAt: defaultCheckInExpectedAt(),
     graceMinutes: 45
+  });
+  const [eventForm, setEventForm] = useState<{
+    eventType: TripEventType;
+    title: string;
+    description: string;
+    occurredAt: string;
+  }>({
+    eventType: 'ARRIVED',
+    title: '',
+    description: '',
+    occurredAt: defaultEventOccurredAt()
   });
   const [matchingForm, setMatchingForm] = useState({
     displayName: 'Sana Rao',
@@ -133,15 +164,21 @@ export function TripDetailClient({
 
   const handleGenerateBrief = () => {
     startBriefGeneration(async () => {
-      const safetyBrief = await generateSafetyBriefAction(data.tripId);
-      setData((current) => ({ ...current, safetyBrief }));
-      setActiveTab('safety');
-      toast({
-        title: 'SARA brief updated',
-        description: safetyBrief.fallbackUsed
-          ? 'Fallback brief was used because the AI response was unavailable.'
-          : 'Safety brief generated successfully.'
-      });
+      try {
+        const safetyBrief = await generateSafetyBriefAction(data.tripId);
+        setData((current) => ({ ...current, safetyBrief }));
+        setActiveTab('safety');
+        toast({
+          title: 'mySaathi brief updated',
+          description: 'Safety brief generated successfully.'
+        });
+      } catch (error) {
+        toast({
+          title: 'Unable to generate safety brief',
+          description: getApiErrorMessage(error, 'Try again in a moment.'),
+          variant: 'destructive'
+        });
+      }
     });
   };
 
@@ -159,7 +196,7 @@ export function TripDetailClient({
         setActiveTab('itinerary');
         toast({
           title: 'Itinerary generated',
-          description: 'SARA created a safer day-by-day route for this trip.'
+          description: 'mySaathi created a safer day-by-day route for this trip.'
         });
       } catch (error) {
         toast({
@@ -190,7 +227,7 @@ export function TripDetailClient({
         setActiveTab('matching');
         toast({
           title: 'Matching enabled',
-          description: 'SARA can now show compatible women traveller suggestions for this trip.'
+          description: 'mySaathi can now show compatible women traveller suggestions for this trip.'
         });
       } catch (error) {
         toast({
@@ -249,7 +286,7 @@ export function TripDetailClient({
         setActiveTab('check-ins');
         toast({
           title: 'Expected check-in created',
-          description: 'SARA will now track this milestone against the trip timeline.'
+          description: 'mySaathi will now track this milestone against the trip timeline.'
         });
       } catch (error) {
         toast({
@@ -292,6 +329,58 @@ export function TripDetailClient({
       .finally(() => {
         setEvaluatingRuleId(null);
       });
+  };
+
+  const handleCreateEvent = () => {
+    startEventCreation(async () => {
+      try {
+        const event = await createTripEvent(data.tripId, {
+          eventType: eventForm.eventType,
+          title: eventForm.title.trim(),
+          description: eventForm.description.trim() || undefined,
+          occurredAt: eventForm.occurredAt
+            ? new Date(eventForm.occurredAt).toISOString()
+            : undefined
+        });
+
+        setData((current) => {
+          const nextTimeline = [
+            ...current.timeline,
+            {
+              id: event.id,
+              tripId: event.tripId,
+              eventType: event.eventType,
+              title: event.title,
+              description: event.description,
+              occurredAt: event.occurredAt
+            }
+          ];
+
+          return {
+            ...current,
+            timeline: nextTimeline,
+            latestEvent: resolveLatestEvent(nextTimeline)
+          };
+        });
+        setEventForm({
+          eventType: 'ARRIVED',
+          title: '',
+          description: '',
+          occurredAt: defaultEventOccurredAt()
+        });
+        setActiveTab('timeline');
+        toast({
+          title: 'Trip event added',
+          description: 'The timeline and latest status have been updated.'
+        });
+      } catch (error) {
+        toast({
+          title: 'Unable to add event',
+          description: getApiErrorMessage(error, 'Try again in a moment.'),
+          variant: 'destructive'
+        });
+      }
+    });
   };
 
   const handleSos = async () => {
@@ -354,7 +443,7 @@ export function TripDetailClient({
             <div className="border-b border-border/70 px-6 py-7 lg:border-b-0 lg:border-r lg:px-8">
               <div className="flex flex-wrap items-center gap-3">
                 <Badge variant={statusBadgeVariant(data.trip.status)}>{data.trip.status}</Badge>
-                <Badge variant="secondary">Generated by SARA</Badge>
+                <Badge variant="secondary">Generated by mySaathi</Badge>
               </div>
               <h1 className="mt-4 text-4xl font-semibold tracking-tight text-slate-950 sm:text-5xl">
                 {data.trip.destination}
@@ -373,7 +462,7 @@ export function TripDetailClient({
               {data.latestEvent ? (
                 <div className="mt-4 space-y-3">
                   <div className="flex items-center gap-3">
-                    <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-900 text-white">
+                    <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-primary text-white shadow-sm">
                       <MapPin className="h-5 w-5" />
                     </span>
                     <div>
@@ -406,11 +495,6 @@ export function TripDetailClient({
                 label="Add Event"
                 onClick={() => {
                   setActiveTab('timeline');
-                  toast({
-                    title: 'Event composer next',
-                    description:
-                      'Connect this action to the trip event form when you are ready.'
-                  });
                 }}
               />
               <ActionButton
@@ -428,6 +512,12 @@ export function TripDetailClient({
                 label={isGeneratingItinerary ? 'Planning...' : 'Generate Itinerary'}
                 onClick={handleGenerateItinerary}
                 disabled={isGeneratingItinerary}
+              />
+              <ActionButton
+                label="Open Matching"
+                onClick={() => {
+                  setActiveTab('matching');
+                }}
               />
               <ActionButton
                 label={isGeneratingBrief ? 'Generating...' : 'Generate Safety Brief'}
@@ -452,8 +542,8 @@ export function TripDetailClient({
                 className={cn(
                   'rounded-full px-5 py-2.5 text-sm font-medium transition',
                   activeTab === tab.id
-                    ? 'bg-slate-900 text-white'
-                    : 'text-slate-600 hover:bg-slate-100 hover:text-slate-950'
+                    ? 'bg-primary text-white shadow-sm'
+                    : 'text-slate-600 hover:bg-sky-50 hover:text-slate-950'
                 )}
               >
                 {tab.label}
@@ -528,8 +618,8 @@ export function TripDetailClient({
                     <Sparkles className="h-5 w-5" />
                   </span>
                   <div>
-                    <p className="eyebrow">SARA Safety Brief</p>
-                    <p className="mt-1 text-sm text-slate-500">Generated by SARA</p>
+                    <p className="eyebrow">mySaathi Safety Brief</p>
+                    <p className="mt-1 text-sm text-slate-500">Generated by mySaathi</p>
                   </div>
                 </div>
                 <p className="mt-5 text-sm leading-7 text-slate-600">{data.safetyBrief.brief}</p>
@@ -644,7 +734,7 @@ export function TripDetailClient({
                 Opt in for calm, limited-intent travel connections
               </h2>
               <p className="mt-4 text-sm leading-7 text-slate-600">
-                Matching stays private by default. SARA only shows structured candidates
+                Matching stays private by default. mySaathi only shows structured candidates
                 with overlapping trip windows and compatible travel context.
               </p>
               {matchingProfile ? (
@@ -808,7 +898,7 @@ export function TripDetailClient({
               <p className="mt-4 text-sm leading-7 text-slate-600">
                 Create a time-bound check-in expectation for hotel arrival, landing, or
                 any other milestone. If the matching trip event does not appear in time,
-                SARA can escalate to guardians.
+                mySaathi can escalate to guardians.
               </p>
               <div className="mt-6 space-y-4">
                 <FormField
@@ -940,6 +1030,82 @@ export function TripDetailClient({
                 </h2>
               </div>
             </div>
+            <div className="mt-6 rounded-[1.5rem] border border-border/70 bg-slate-50/90 px-5 py-5">
+              <div className="flex items-center gap-3">
+                <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-100 text-slate-700">
+                  <MapPin className="h-5 w-5" />
+                </span>
+                <div>
+                  <p className="eyebrow">Add timeline event</p>
+                  <h3 className="mt-1 text-xl font-semibold text-slate-950">
+                    Record a new trip update
+                  </h3>
+                </div>
+              </div>
+              <div className="mt-5 grid gap-4 lg:grid-cols-2">
+                <label className="block space-y-2">
+                  <span className="text-sm font-medium text-slate-700">Event type</span>
+                  <select
+                    className="h-11 w-full rounded-2xl border border-border bg-white px-4 text-sm text-slate-900 outline-none transition focus:border-slate-400"
+                    value={eventForm.eventType}
+                    onChange={(event) =>
+                      setEventForm((current) => ({
+                        ...current,
+                        eventType: event.target.value as TripEventType
+                      }))
+                    }
+                  >
+                    {tripEventTypes.map((eventType) => (
+                      <option key={eventType} value={eventType}>
+                        {eventType}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <FormField
+                  label="Title"
+                  value={eventForm.title}
+                  onChange={(value) =>
+                    setEventForm((current) => ({ ...current, title: value }))
+                  }
+                />
+                <label className="block space-y-2 lg:col-span-2">
+                  <span className="text-sm font-medium text-slate-700">Description</span>
+                  <textarea
+                    value={eventForm.description}
+                    onChange={(event) =>
+                      setEventForm((current) => ({
+                        ...current,
+                        description: event.target.value
+                      }))
+                    }
+                    className="min-h-[108px] w-full rounded-2xl border border-border bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-slate-400"
+                  />
+                </label>
+                <label className="block space-y-2">
+                  <span className="text-sm font-medium text-slate-700">Occurred at</span>
+                  <input
+                    type="datetime-local"
+                    value={eventForm.occurredAt}
+                    onChange={(event) =>
+                      setEventForm((current) => ({
+                        ...current,
+                        occurredAt: event.target.value
+                      }))
+                    }
+                    className="h-11 w-full rounded-2xl border border-border bg-white px-4 text-sm text-slate-900 outline-none transition focus:border-slate-400"
+                  />
+                </label>
+              </div>
+              <Button
+                variant="destructive"
+                className="mt-6"
+                onClick={handleCreateEvent}
+                disabled={isCreatingEvent || !eventForm.title.trim()}
+              >
+                {isCreatingEvent ? 'Saving event...' : 'Save event'}
+              </Button>
+            </div>
             {sortedTimeline.length === 0 ? (
               <div className="mt-6 rounded-[1.6rem] border border-dashed border-border/70 bg-slate-50/90 px-6 py-8 text-sm text-slate-500">
                 No trip events yet. Once events are added, they will appear here in a clear
@@ -1008,7 +1174,7 @@ export function TripDetailClient({
             <div className="rounded-[2rem] border border-border/70 bg-white/92 p-7 shadow-panel">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="eyebrow">SARA Safety Brief</p>
+                  <p className="eyebrow">mySaathi Safety Brief</p>
                   <h2 className="mt-2 text-2xl font-semibold text-slate-950">
                     Calm, readable trip context
                   </h2>
@@ -1271,4 +1437,19 @@ function defaultCheckInExpectedAt() {
   const target = new Date(Date.now() + 2 * 60 * 60 * 1000);
   const timezoneOffset = target.getTimezoneOffset() * 60 * 1000;
   return new Date(target.getTime() - timezoneOffset).toISOString().slice(0, 16);
+}
+
+function defaultEventOccurredAt() {
+  const target = new Date();
+  const timezoneOffset = target.getTimezoneOffset() * 60 * 1000;
+  return new Date(target.getTime() - timezoneOffset).toISOString().slice(0, 16);
+}
+
+function resolveLatestEvent(events: DashboardPageData['timeline']) {
+  return (
+    [...events].sort(
+      (left, right) =>
+        new Date(right.occurredAt).getTime() - new Date(left.occurredAt).getTime()
+    )[0] ?? null
+  );
 }

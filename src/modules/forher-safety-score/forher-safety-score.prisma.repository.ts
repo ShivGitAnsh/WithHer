@@ -17,21 +17,11 @@ export class PrismaForHerSafetyScoreRepository
       where: { id: tripId },
       select: {
         id: true,
+        title: true,
+        destination: true,
         status: true,
         startDate: true,
-        endDate: true,
-        events: {
-          orderBy: {
-            occurredAt: 'desc'
-          },
-          select: {
-            id: true,
-            tripId: true,
-            eventType: true,
-            title: true,
-            occurredAt: true
-          }
-        }
+        endDate: true
       }
     });
   }

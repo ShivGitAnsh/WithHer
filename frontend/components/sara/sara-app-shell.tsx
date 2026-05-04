@@ -6,7 +6,7 @@ export function SaraAppShell({ children }: { children: ReactNode }) {
   return (
     <div className="relative min-h-screen">
       <SaraNavigation />
-      <main className="page-shell pb-16 pt-8 sm:pt-10">{children}</main>
+      <main className="page-shell pb-20 pt-6 sm:pt-8">{children}</main>
     </div>
   );
 }

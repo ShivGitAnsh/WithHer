@@ -10,12 +10,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export function SosCard({
   onTriggerSos,
-  isLoading = false,
-  isDemoTrip = false
+  isLoading = false
 }: {
   onTriggerSos?: () => void | Promise<void>;
   isLoading?: boolean;
-  isDemoTrip?: boolean;
 }) {
   const headingId = useId();
 
@@ -53,16 +51,9 @@ export function SosCard({
           <InfoTile icon={PhoneCall} title="Escalation" body="Fast response channel" />
         </div>
 
-        {isDemoTrip ? (
-          <p className="rounded-2xl bg-secondary px-4 py-3 text-sm text-muted-foreground">
-            Demo trip: SOS from this card uses a simulated alert. Use a real trip id from your
-            backend to test WhatsApp notifications.
-          </p>
-        ) : (
-          <p className="rounded-2xl bg-secondary px-4 py-3 text-sm text-muted-foreground">
-            Use the floating SOS button for a confirmation step before an alert is sent.
-          </p>
-        )}
+        <p className="rounded-2xl bg-secondary px-4 py-3 text-sm text-muted-foreground">
+          Use the floating SOS button for a confirmation step before an alert is sent.
+        </p>
 
         {onTriggerSos ? (
           <Button

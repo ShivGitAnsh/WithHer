@@ -56,14 +56,20 @@ export function DashboardClient({
 
   const handleGenerateBrief = () => {
     startBriefGeneration(async () => {
-      const safetyBrief = await generateSafetyBriefAction(data.tripId);
-      setData((current) => ({ ...current, safetyBrief }));
-      toast({
-        title: 'Safety brief updated',
-        description: safetyBrief.fallbackUsed
-          ? 'Fallback brief was used because the AI response was unavailable.'
-          : 'AI safety brief regenerated successfully.'
-      });
+      try {
+        const safetyBrief = await generateSafetyBriefAction(data.tripId);
+        setData((current) => ({ ...current, safetyBrief }));
+        toast({
+          title: 'Safety brief updated',
+          description: 'AI safety brief regenerated successfully.'
+        });
+      } catch (error) {
+        toast({
+          title: 'Unable to generate safety brief',
+          description: getApiErrorMessage(error, 'Try again in a moment.'),
+          variant: 'destructive'
+        });
+      }
     });
   };
 
@@ -167,7 +173,6 @@ export function DashboardClient({
           <SosCard
             onTriggerSos={handleSos}
             isLoading={isTriggeringSos}
-            isDemoTrip={data.tripId.startsWith('demo-')}
           />
         </div>
 

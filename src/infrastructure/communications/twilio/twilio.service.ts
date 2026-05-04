@@ -1,10 +1,18 @@
 import twilio, { type Twilio } from 'twilio';
+import type { MessageInstance } from 'twilio/lib/rest/api/v2010/account/message';
 
 import { env } from '../../../config/env';
 
 export interface SendWhatsAppMessageInput {
   to: string;
   body: string;
+}
+
+export interface SentWhatsAppMessageResult {
+  sid: string;
+  status: string | null;
+  to: string;
+  from: string;
 }
 
 export class TwilioService {
@@ -26,19 +34,30 @@ export class TwilioService {
   async sendWhatsAppMessage({
     to,
     body
-  }: SendWhatsAppMessageInput): Promise<void> {
+  }: SendWhatsAppMessageInput): Promise<SentWhatsAppMessageResult> {
     if (!this.client || !this.fromWhatsAppNumber) {
       throw new Error('Twilio WhatsApp Sandbox is not configured');
     }
 
-    await this.client.messages.create({
+    const message = await this.client.messages.create({
       from: this.fromWhatsAppNumber,
       to: this.normalizeWhatsAppRecipient(to),
       body
     });
+
+    return this.toMessageResult(message);
   }
 
   private normalizeWhatsAppRecipient(to: string): string {
     return to.startsWith('whatsapp:') ? to : `whatsapp:${to}`;
+  }
+
+  private toMessageResult(message: MessageInstance): SentWhatsAppMessageResult {
+    return {
+      sid: message.sid,
+      status: message.status ?? null,
+      to: message.to,
+      from: message.from
+    };
   }
 }

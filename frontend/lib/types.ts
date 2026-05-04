@@ -1,4 +1,16 @@
 export type TripStatus = 'PLANNED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
+export type TripEventType =
+  | 'BOOKED'
+  | 'DEPARTED'
+  | 'ARRIVED'
+  | 'CHECKED_IN'
+  | 'CHECKED_OUT'
+  | 'TRANSIT'
+  | 'DELAYED'
+  | 'RETURN_STARTED'
+  | 'HOME_REACHED'
+  | 'SOS_TRIGGERED'
+  | 'CUSTOM';
 
 export interface TripSummary {
   id: string;
@@ -13,10 +25,25 @@ export interface TripSummary {
 export interface TripEvent {
   id: string;
   tripId: string;
-  eventType: string;
+  eventType: TripEventType;
   title: string;
   description?: string | null;
   occurredAt: string;
+}
+
+export interface CreateTripInput {
+  userId: string;
+  title: string;
+  destination: string;
+  startDate: string;
+  endDate: string;
+}
+
+export interface CreateTripEventInput {
+  eventType: TripEventType;
+  title: string;
+  description?: string;
+  occurredAt?: string;
 }
 
 export interface Guardian {
@@ -25,6 +52,15 @@ export interface Guardian {
   relationship: string;
   phoneNumber?: string | null;
   email?: string | null;
+}
+
+export interface UserProfileData {
+  id: string;
+  fullName: string;
+  email: string;
+  phoneNumber?: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export type ShareScope =
@@ -92,7 +128,7 @@ export interface EmergencyContact {
 
 export interface SafetyBriefData {
   brief: string;
-  fallbackUsed: boolean;
+  generationSource: 'llm';
 }
 
 export interface SafetyScoreData {
@@ -127,6 +163,7 @@ export interface ItineraryPlanData {
   overview: string;
   rationale: string[];
   days: ItineraryPlanDay[];
+  generationSource: 'llm';
   createdAt: string;
   updatedAt: string;
 }
@@ -148,7 +185,7 @@ export interface DashboardPageData {
   safetyBrief: SafetyBriefData;
   safetyScore: SafetyScoreData;
   itineraryPlan: ItineraryPlanData | null;
-  source: 'api' | 'demo';
+  source: 'api';
 }
 
 export interface ForHerPreferenceData {
@@ -184,7 +221,7 @@ export interface SosTriggerData {
   event: {
     id: string;
     tripId: string;
-    eventType: string;
+    eventType: TripEventType;
     title: string;
     description?: string | null;
     occurredAt: string;

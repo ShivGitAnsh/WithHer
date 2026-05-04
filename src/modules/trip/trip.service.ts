@@ -40,6 +40,16 @@ export class TripService {
     });
   }
 
+  async getTripsByUserId(userId: string): Promise<Trip[]> {
+    const userExists = await this.tripRepository.userExists(userId);
+
+    if (!userExists) {
+      throw new AppError('User not found', StatusCodes.NOT_FOUND, 'USER_NOT_FOUND');
+    }
+
+    return this.tripRepository.findTripsByUserId(userId);
+  }
+
   async getTripById(tripId: string): Promise<TripWithEvents> {
     const trip = await this.tripRepository.findTripById(tripId);
 
@@ -111,7 +121,7 @@ export class TripService {
 
       return {
         brief,
-        fallbackUsed: false
+        generationSource: 'llm'
       };
     } catch (error) {
       logger.error(
@@ -122,14 +132,11 @@ export class TripService {
         'Failed to generate LLM safety brief'
       );
 
-      return {
-        brief: this.buildFallbackSafetyBrief({
-          tripTitle: trip.title,
-          destination: trip.destination,
-          latestEvent
-        }),
-        fallbackUsed: true
-      };
+      throw new AppError(
+        'Unable to generate safety brief right now',
+        StatusCodes.BAD_GATEWAY,
+        'SAFETY_BRIEF_GENERATION_FAILED'
+      );
     }
   }
 
@@ -175,36 +182,5 @@ export class TripService {
     }
 
     return tripEvent;
-  }
-
-  private buildFallbackSafetyBrief(input: {
-    tripTitle: string;
-    destination: string;
-    latestEvent: {
-      eventType: string;
-      title: string;
-      description?: string | null;
-      occurredAt: Date;
-    } | null;
-  }): string {
-    if (input.latestEvent) {
-      const formattedTime = new Intl.DateTimeFormat('en-IN', {
-        hour: 'numeric',
-        minute: '2-digit',
-        hour12: true
-      }).format(input.latestEvent.occurredAt);
-
-      return [
-        `This trip is for ${input.destination} and the latest recorded update is ${input.latestEvent.eventType} at ${formattedTime}.`,
-        `The current update is "${input.latestEvent.title}".`,
-        'This summary is based only on the trip details and latest recorded event.'
-      ].join(' ');
-    }
-
-    return [
-      `This trip is planned for ${input.destination}.`,
-      'There is no travel update recorded yet.',
-      'This summary is based only on the trip details currently available.'
-    ].join(' ');
   }
 }

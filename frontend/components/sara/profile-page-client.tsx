@@ -13,7 +13,7 @@ import {
   deleteEmergencyContact
 } from '@/lib/api';
 import { getApiErrorMessage } from '@/lib/api-error';
-import type { EmergencyContact, Guardian } from '@/lib/types';
+import type { EmergencyContact, Guardian, UserProfileData } from '@/lib/types';
 
 export function ProfilePageClient({
   profile,
@@ -22,14 +22,7 @@ export function ProfilePageClient({
   tripCount,
   activeJourneyCount
 }: {
-  profile: {
-    id: string;
-    name: string;
-    role: string;
-    email: string;
-    city: string;
-    membership: string;
-  };
+  profile: UserProfileData;
   guardians: Guardian[];
   initialEmergencyContacts: EmergencyContact[];
   tripCount: number;
@@ -118,7 +111,7 @@ export function ProfilePageClient({
           <div className="flex items-center gap-4">
             <Avatar className="h-16 w-16 border border-border/70 bg-slate-100">
               <AvatarFallback className="bg-slate-100 text-lg font-semibold text-slate-700">
-                {profile.name
+                {profile.fullName
                   .split(' ')
                   .map((part) => part[0])
                   .join('')}
@@ -126,12 +119,12 @@ export function ProfilePageClient({
             </Avatar>
             <div>
               <p className="eyebrow">Profile</p>
-              <h1 className="mt-1 text-3xl font-semibold text-slate-950">{profile.name}</h1>
-              <p className="mt-2 text-sm text-slate-600">{profile.role}</p>
+              <h1 className="mt-1 text-3xl font-semibold text-slate-950">{profile.fullName}</h1>
+              <p className="mt-2 text-sm text-slate-600">Solo traveller account</p>
             </div>
           </div>
           <Badge variant="secondary" className="self-start md:self-auto">
-            {profile.membership}
+            Live account
           </Badge>
         </div>
       </section>
@@ -142,7 +135,11 @@ export function ProfilePageClient({
             <p className="eyebrow">Contact</p>
             <div className="mt-5 space-y-4">
               <ProfileRow icon={Mail} label="Email" value={profile.email} />
-              <ProfileRow icon={MapPin} label="Home base" value={profile.city} />
+              <ProfileRow
+                icon={MapPin}
+                label="Phone"
+                value={profile.phoneNumber || 'Not added yet'}
+              />
               <ProfileRow
                 icon={ShieldCheck}
                 label="Preference"

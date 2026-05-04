@@ -6,6 +6,7 @@ import type { TripService } from './trip.service';
 import {
   createTripEventSchema,
   createTripSchema,
+  getTripsQuerySchema,
   tripFamilyDashboardParamsSchema,
   tripSafetyBriefParamsSchema,
   tripIdParamsSchema
@@ -13,6 +14,22 @@ import {
 
 export class TripController {
   constructor(private readonly tripService: TripService) {}
+
+  getTrips = async (request: Request, response: Response): Promise<void> => {
+    const parsedQuery = getTripsQuerySchema.safeParse(request.query);
+
+    if (!parsedQuery.success) {
+      throw new AppError(
+        parsedQuery.error.issues[0]?.message ?? 'Invalid trip query',
+        StatusCodes.BAD_REQUEST,
+        'VALIDATION_ERROR'
+      );
+    }
+
+    const trips = await this.tripService.getTripsByUserId(parsedQuery.data.userId);
+
+    response.status(StatusCodes.OK).json({ data: trips });
+  };
 
   createTrip = async (request: Request, response: Response): Promise<void> => {
     const parsedBody = createTripSchema.safeParse(request.body);

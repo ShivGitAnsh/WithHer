@@ -1,20 +1,35 @@
+import { DataStatePanel } from '@/components/sara/data-state-panel';
 import { ProfilePageClient } from '@/components/sara/profile-page-client';
-import { getEmergencyContacts, getGuardians } from '@/lib/api';
-import { saraTripCatalog, saraUserProfile } from '@/lib/product-data';
+import { getEmergencyContacts, getGuardians, getTripsByUser, getUserProfile } from '@/lib/api';
+import { getConfiguredUserId } from '@/lib/runtime-config';
 
 export default async function ProfilePage() {
-  const [guardians, emergencyContacts] = await Promise.all([
-    getGuardians(saraUserProfile.id),
-    getEmergencyContacts(saraUserProfile.id)
+  const userId = getConfiguredUserId();
+
+  if (!userId) {
+    return (
+      <DataStatePanel
+        eyebrow="Setup required"
+        title="Profile needs a real user id"
+        description="Set NEXT_PUBLIC_DEFAULT_USER_ID in frontend/.env.local to load profile, guardians, and emergency contacts from the database."
+      />
+    );
+  }
+
+  const [profile, guardians, emergencyContacts, trips] = await Promise.all([
+    getUserProfile(userId),
+    getGuardians(userId),
+    getEmergencyContacts(userId),
+    getTripsByUser(userId)
   ]);
 
   return (
     <ProfilePageClient
-      profile={saraUserProfile}
+      profile={profile}
       guardians={guardians}
       initialEmergencyContacts={emergencyContacts}
-      tripCount={saraTripCatalog.length}
-      activeJourneyCount={saraTripCatalog.filter((trip) => trip.status === 'ACTIVE').length}
+      tripCount={trips.length}
+      activeJourneyCount={trips.filter((trip) => trip.status === 'ACTIVE').length}
     />
   );
 }

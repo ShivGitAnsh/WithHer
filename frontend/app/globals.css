@@ -4,40 +4,40 @@
 
 @layer base {
   :root {
-    --background: 210 20% 98%;
-    --foreground: 222 24% 14%;
+    --background: 210 45% 98%;
+    --foreground: 217 37% 16%;
     --card: 0 0% 100%;
-    --card-foreground: 222 24% 14%;
-    --primary: 192 77% 33%;
+    --card-foreground: 217 37% 16%;
+    --primary: 212 94% 46%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 210 24% 96%;
-    --secondary-foreground: 220 16% 24%;
-    --muted: 210 20% 95%;
-    --muted-foreground: 220 11% 44%;
-    --accent: 334 55% 95%;
-    --accent-foreground: 334 28% 26%;
-    --border: 214 20% 89%;
-    --input: 214 20% 89%;
-    --ring: 192 77% 33%;
+    --secondary: 210 54% 96%;
+    --secondary-foreground: 216 24% 28%;
+    --muted: 210 38% 95%;
+    --muted-foreground: 215 15% 44%;
+    --accent: 336 72% 97%;
+    --accent-foreground: 334 32% 32%;
+    --border: 214 31% 89%;
+    --input: 214 31% 89%;
+    --ring: 212 94% 46%;
     --sidebar: 0 0% 100%;
-    --sidebar-foreground: 222 24% 14%;
-    --sidebar-border: 214 20% 89%;
-    --rose-mist: 336 30% 96%;
-    --rose-cloud: 336 28% 92%;
-    --petal: 335 34% 85%;
-    --blush: 334 72% 70%;
-    --cocoa: 222 14% 33%;
-    --plum-ink: 222 24% 14%;
-    --sage: 156 24% 92%;
-    --coral-glow: 334 62% 66%;
-    --safe: 150 61% 33%;
-    --safe-surface: 148 45% 95%;
-    --caution: 39 92% 45%;
+    --sidebar-foreground: 217 37% 16%;
+    --sidebar-border: 214 31% 89%;
+    --rose-mist: 342 52% 97%;
+    --rose-cloud: 340 46% 94%;
+    --petal: 340 40% 88%;
+    --blush: 338 79% 67%;
+    --cocoa: 215 17% 36%;
+    --plum-ink: 217 37% 16%;
+    --sage: 156 28% 93%;
+    --coral-glow: 16 93% 63%;
+    --safe: 147 66% 34%;
+    --safe-surface: 149 56% 95%;
+    --caution: 38 92% 47%;
     --caution-surface: 45 100% 95%;
-    --danger: 4 100% 59%;
-    --danger-surface: 8 100% 97%;
-    --shadow-panel: 0 24px 60px rgba(15, 23, 42, 0.08);
-    --shadow-float: 0 16px 36px rgba(15, 23, 42, 0.12);
+    --danger: 12 92% 58%;
+    --danger-surface: 15 100% 96%;
+    --shadow-panel: 0 14px 34px rgba(16, 56, 112, 0.08);
+    --shadow-float: 0 16px 32px rgba(16, 56, 112, 0.16);
   }
 
   * {
@@ -51,10 +51,11 @@
   body {
     @apply bg-background text-foreground antialiased;
     background-image:
-      radial-gradient(circle at top left, rgba(186, 230, 253, 0.26), transparent 24%),
-      radial-gradient(circle at top right, rgba(255, 255, 255, 0.68), transparent 22%),
-      linear-gradient(180deg, #f8fafc 0%, #f1f5f9 52%, #f8fafc 100%);
+      radial-gradient(circle at top left, rgba(88, 170, 255, 0.18), transparent 22%),
+      radial-gradient(circle at top right, rgba(199, 230, 255, 0.24), transparent 20%),
+      linear-gradient(180deg, #dbeeff 0%, #eef6ff 180px, #f6f9fe 420px, #f8fbff 100%);
     min-height: 100vh;
+    overflow-x: hidden;
   }
 
   h1,
@@ -67,39 +68,89 @@
 
 @layer components {
   .forher-mode {
-    --accent: 336 62% 95%;
-    --accent-foreground: 332 26% 28%;
-    --border: 330 22% 88%;
-    --input: 330 22% 88%;
-    --rose-mist: 336 34% 96%;
-    --rose-cloud: 338 32% 93%;
-    --petal: 334 38% 86%;
-    --blush: 334 72% 70%;
-    --coral-glow: 334 62% 66%;
-    --shadow-panel: 0 24px 60px rgba(90, 49, 71, 0.08);
-    --shadow-float: 0 16px 36px rgba(120, 72, 94, 0.14);
+    --primary: 336 79% 61%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 335 42% 96%;
+    --secondary-foreground: 331 24% 30%;
+    --muted: 334 34% 95%;
+    --muted-foreground: 332 12% 44%;
+    --accent: 338 86% 97%;
+    --accent-foreground: 333 34% 31%;
+    --border: 332 26% 90%;
+    --input: 332 26% 90%;
+    --ring: 336 79% 61%;
+    --rose-mist: 340 58% 97%;
+    --rose-cloud: 339 48% 95%;
+    --petal: 338 42% 90%;
+    --blush: 338 76% 70%;
+    --coral-glow: 340 76% 68%;
+    --shadow-panel: 0 14px 34px rgba(106, 71, 95, 0.08);
+    --shadow-float: 0 16px 32px rgba(106, 71, 95, 0.14);
     background-image:
-      radial-gradient(circle at top left, rgba(255, 228, 236, 0.28), transparent 24%),
-      radial-gradient(circle at top right, rgba(230, 230, 250, 0.22), transparent 22%),
-      linear-gradient(180deg, #fbfbfd 0%, #f8f6fa 52%, #fbfbfd 100%);
+      radial-gradient(circle at top left, rgba(255, 214, 226, 0.18), transparent 22%),
+      radial-gradient(circle at top right, rgba(232, 226, 255, 0.14), transparent 20%),
+      linear-gradient(180deg, #e8f2ff 0%, #f7f8fc 220px, #fbfbfd 100%);
+  }
+
+  .forher-mode .nav-shell {
+    border-color: rgba(242, 220, 230, 0.95);
+    background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(255, 247, 250, 0.96));
+  }
+
+  .forher-mode .hero-panel {
+    background-image:
+      radial-gradient(circle at 12% 12%, rgba(255, 255, 255, 0.55), transparent 24%),
+      radial-gradient(circle at 88% 16%, rgba(255, 202, 218, 0.28), transparent 22%),
+      linear-gradient(135deg, rgba(255, 244, 248, 0.98), rgba(249, 243, 255, 0.96));
+  }
+
+  .forher-mode .card-surface {
+    border-color: rgba(242, 224, 232, 0.98);
+  }
+
+  .forher-mode .soft-section {
+    border-color: rgba(244, 225, 233, 0.98);
+    background-image: linear-gradient(180deg, rgba(255, 249, 251, 0.98), rgba(253, 244, 248, 0.95));
   }
 
   .page-shell {
-    @apply mx-auto max-w-7xl px-4 sm:px-6 lg:px-8;
+    @apply mx-auto w-full max-w-[1440px] px-4 sm:px-6 lg:px-8 xl:px-10;
   }
 
   .nav-shell {
-    @apply rounded-[1.75rem] border border-white/80 bg-white/70 shadow-panel backdrop-blur-xl;
+    @apply rounded-[1.65rem] border bg-white shadow-panel;
+    border-color: rgba(220, 232, 246, 0.95);
+    backdrop-filter: blur(12px);
   }
 
   .hero-panel {
     background-image:
-      radial-gradient(circle at 10% 10%, rgba(186, 230, 253, 0.3), transparent 28%),
-      radial-gradient(circle at 88% 14%, rgba(255, 255, 255, 0.68), transparent 24%),
-      linear-gradient(135deg, rgba(255, 255, 255, 0.82), rgba(241, 245, 249, 0.92));
+      radial-gradient(circle at 12% 12%, rgba(255, 255, 255, 0.52), transparent 24%),
+      radial-gradient(circle at 88% 16%, rgba(164, 215, 255, 0.34), transparent 22%),
+      linear-gradient(135deg, rgba(231, 245, 255, 0.98), rgba(244, 249, 255, 0.96));
   }
 
   .eyebrow {
-    @apply text-[11px] font-semibold uppercase tracking-[0.28em] text-slate-400;
+    @apply text-[11px] font-semibold uppercase tracking-[0.26em] text-slate-400;
+  }
+
+  .dashboard-surface {
+    @apply w-full;
+  }
+
+  .card-surface {
+    @apply border bg-white;
+    border-color: rgba(223, 233, 245, 0.95);
+    box-shadow: var(--shadow-panel);
+  }
+
+  .soft-section {
+    @apply rounded-[1.35rem] border;
+    border-color: rgba(223, 233, 245, 0.95);
+    background-image: linear-gradient(180deg, rgba(247, 250, 255, 0.98), rgba(241, 246, 255, 0.94));
+  }
+
+  .pill-label {
+    @apply text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400;
   }
 }

@@ -15,6 +15,7 @@ import { buildHealthRouter } from '../../../modules/health/health.routes';
 import { buildTripRouter } from '../../../modules/trip/trip.routes';
 import { buildForHerConsentRouter } from '../../../modules/trip-sharing/forher-consent.routes';
 import { buildTripSharingRouter } from '../../../modules/trip-sharing/trip-sharing.routes';
+import { buildUserRouter } from '../../../modules/user/user.routes';
 
 export const buildApiRouter = (): Router => {
   const router = Router();
@@ -37,6 +38,7 @@ export const buildApiRouter = (): Router => {
   router.use('/health', buildHealthRouter());
   router.use('/trips', buildTripRouter());
   router.use('/trips', buildTripSharingRouter());
+  router.use('/users', buildUserRouter());
 
   return router;
 };

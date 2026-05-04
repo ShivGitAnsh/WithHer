@@ -23,7 +23,7 @@ export class NotificationService {
         const message = this.buildTripEventMessage(payload);
 
         try {
-          await this.twilioService.sendWhatsAppMessage({
+          const result = await this.twilioService.sendWhatsAppMessage({
             to: recipient.phoneNumber,
             body: message
           });
@@ -32,9 +32,12 @@ export class NotificationService {
             {
               guardianId: recipient.guardianId,
               eventType: payload.eventType,
-              tripTitle: payload.tripTitle
+              tripTitle: payload.tripTitle,
+              messageSid: result.sid,
+              twilioStatus: result.status,
+              to: result.to
             },
-            'Trip event WhatsApp message sent'
+            'Trip event WhatsApp message accepted by Twilio'
           );
         } catch (error) {
           logger.error(

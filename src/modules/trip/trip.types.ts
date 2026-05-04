@@ -12,6 +12,10 @@ export const tripIdParamsSchema = z.object({
   id: z.string().min(1, 'Trip id is required')
 });
 
+export const getTripsQuerySchema = z.object({
+  userId: z.string().min(1, 'User id is required')
+});
+
 export const tripFamilyDashboardParamsSchema = z.object({
   tripId: z.string().min(1, 'Trip id is required')
 });
@@ -48,6 +52,7 @@ export const createTripEventSchema = z.object({
 export type CreateTripInput = z.infer<typeof createTripSchema>;
 export type CreateTripEventInput = z.infer<typeof createTripEventSchema>;
 export type TripIdParams = z.infer<typeof tripIdParamsSchema>;
+export type GetTripsQuery = z.infer<typeof getTripsQuerySchema>;
 export type TripFamilyDashboardParams = z.infer<typeof tripFamilyDashboardParamsSchema>;
 export type TripSafetyBriefParams = z.infer<typeof tripSafetyBriefParamsSchema>;
 
@@ -136,7 +141,7 @@ export interface SafetyBriefLlmInput {
 
 export interface SafetyBriefResponse {
   brief: string;
-  fallbackUsed: boolean;
+  generationSource: 'llm';
 }
 
 export interface SafetyBriefLlmService {

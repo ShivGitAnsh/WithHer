@@ -1,4 +1,4 @@
-import { TripEventType, TripStatus, type Trip, type TripEvent } from '@prisma/client';
+import { TripStatus, type Trip } from '@prisma/client';
 import { z } from 'zod';
 
 export const forHerSafetyScoreParamsSchema = z.object({
@@ -9,17 +9,10 @@ export type ForHerSafetyScoreParams = z.infer<typeof forHerSafetyScoreParamsSche
 
 export type SafetyScoreTripRecord = Pick<
   Trip,
-  'id' | 'status' | 'startDate' | 'endDate'
+  'id' | 'title' | 'destination' | 'status' | 'startDate' | 'endDate'
 >;
 
-export type SafetyScoreEventRecord = Pick<
-  TripEvent,
-  'id' | 'tripId' | 'eventType' | 'title' | 'occurredAt'
->;
-
-export type TripSafetyScoreRecord = SafetyScoreTripRecord & {
-  events: SafetyScoreEventRecord[];
-};
+export type TripSafetyScoreRecord = SafetyScoreTripRecord;
 
 export interface ForHerSafetyScoreResponse {
   score: number;
@@ -27,26 +20,42 @@ export interface ForHerSafetyScoreResponse {
   reasons: string[];
 }
 
-export interface SafetyScoreRuleContext {
-  trip: SafetyScoreTripRecord;
-  latestEvent: SafetyScoreEventRecord | null;
-  latestCheckIn: SafetyScoreEventRecord | null;
-  now: Date;
+export interface WomenTravellerReview {
+  reviewerLabel: string;
+  travelContext: 'Solo' | 'Duo' | 'Friends';
+  sentiment: 'Positive' | 'Mixed' | 'Cautious';
+  rating: number;
+  review: string;
+  tags: string[];
 }
 
-export interface SafetyScoreRuleResult {
-  scoreDelta: number;
-  reason?: string;
+export interface WomenTravellerReviewSet {
+  destinationLabel: string;
+  destinationKeywords: string[];
+  reviews: WomenTravellerReview[];
+}
+
+export interface SafetyScoreLlmInput {
+  tripTitle: string;
+  destination: string;
+  tripStatus: TripStatus;
+  startDate: string;
+  endDate: string;
+  reviewSetLabel: string;
+  reviews: WomenTravellerReview[];
+}
+
+export const llmSafetyScoreOutputSchema = z.object({
+  score: z.number().int().min(0).max(100),
+  reasons: z.array(z.string().min(1)).min(1).max(4)
+});
+
+export type SafetyScoreLlmOutput = z.infer<typeof llmSafetyScoreOutputSchema>;
+
+export interface SafetyScoreLlmService {
+  generateSafetyScore(input: SafetyScoreLlmInput): Promise<SafetyScoreLlmOutput>;
 }
 
 export interface ForHerSafetyScoreRepository {
   findTripSafetyScoreByTripId(tripId: string): Promise<TripSafetyScoreRecord | null>;
 }
-
-export const RECENT_CHECK_IN_EVENT_TYPES: TripEventType[] = [TripEventType.CHECKED_IN];
-export const NIGHT_ARRIVAL_EVENT_TYPES: TripEventType[] = [
-  TripEventType.ARRIVED,
-  TripEventType.CHECKED_IN,
-  TripEventType.HOME_REACHED
-];
-export const ACTIVE_TRIP_STATUSES: TripStatus[] = [TripStatus.ACTIVE];

@@ -21,13 +21,10 @@ export function AiSafetyBriefCard({
       <CardHeader className="flex flex-row items-center justify-between pb-3">
         <CardTitle className="flex items-center gap-2 text-2xl">
           <BrainCircuit className="h-5 w-5 text-primary" />
-          AI Safety Brief
+          mySaathi Safety Brief
         </CardTitle>
-        <Badge
-          variant={data.safetyBrief.fallbackUsed ? 'caution' : 'secondary'}
-          className="rounded-full"
-        >
-          {data.safetyBrief.fallbackUsed ? 'Fallback' : 'AI generated'}
+        <Badge variant="secondary" className="rounded-full">
+          AI generated
         </Badge>
       </CardHeader>
       <CardContent className="space-y-5">

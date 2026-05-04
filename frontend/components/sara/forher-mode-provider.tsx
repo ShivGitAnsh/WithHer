@@ -28,7 +28,7 @@ export function ForHerModeProvider({
   userId,
   children
 }: {
-  userId: string;
+  userId?: string | null;
   children: ReactNode;
 }) {
   const [enabled, setEnabled] = useState(false);
@@ -40,6 +40,15 @@ export function ForHerModeProvider({
     let isMounted = true;
 
     const loadPreference = async () => {
+      if (!userId) {
+        if (isMounted) {
+          setEnabled(false);
+          setIsLoading(false);
+        }
+
+        return;
+      }
+
       try {
         const preference = await getForHerPreference(userId);
 
@@ -69,7 +78,7 @@ export function ForHerModeProvider({
   }, [userId]);
 
   const toggle = useCallback(async () => {
-    if (isLoading || isUpdating) {
+    if (!userId || isLoading || isUpdating) {
       return;
     }
 
@@ -80,10 +89,7 @@ export function ForHerModeProvider({
       const preference = await updateForHerPreference(userId, nextValue);
       setEnabled(preference.enabled);
       toast({
-        title: preference.enabled ? 'ForHer mode enabled' : 'ForHer mode disabled',
-        description: preference.enabled
-          ? 'The interface has shifted to a softer, more personal feel.'
-          : 'The interface is back to the standard travel product tone.'
+        title: preference.enabled ? 'ForHer mode enabled' : 'ForHer mode disabled'
       });
     } catch {
       toast({
@@ -139,14 +145,14 @@ export function ForHerModeSwitch({
 
   if (variant === 'panel') {
     return (
-      <div
-        className={cn(
-          'flex flex-col gap-4 rounded-[1.6rem] border px-5 py-5 transition-all sm:flex-row sm:items-center sm:justify-between',
-          enabled
-            ? 'border-[rgba(255,107,154,0.22)] bg-[linear-gradient(135deg,rgba(255,255,255,0.96),rgba(255,244,248,0.9))]'
-            : 'border-border/70 bg-slate-50/80'
-        )}
-      >
+        <div
+          className={cn(
+            'flex flex-col gap-4 rounded-[1.6rem] border px-5 py-5 transition-all sm:flex-row sm:items-center sm:justify-between',
+            enabled
+              ? 'border-[rgba(255,170,194,0.5)] bg-[linear-gradient(135deg,rgba(255,255,255,0.98),rgba(255,245,248,0.94))]'
+              : 'border-border/70 bg-[linear-gradient(180deg,rgba(248,251,255,0.98),rgba(242,247,255,0.94))]'
+          )}
+        >
         <div className="space-y-1.5">
           <div className="flex items-center gap-3">
             <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white text-slate-700 shadow-sm">
@@ -159,7 +165,7 @@ export function ForHerModeSwitch({
               <p className="text-sm text-slate-500">
                 {enabled
                   ? 'Softened accents and warmer cues are active.'
-                  : 'Standard SARA theme is currently active.'}
+                  : 'Standard mySaathi theme is currently active.'}
               </p>
             </div>
           </div>
@@ -216,14 +222,14 @@ function SwitchButton({
       aria-label="Travel with Confidence (ForHer)"
       disabled={isLoading || isUpdating}
       onClick={() => void onToggle()}
-      className={cn(
-        'relative inline-flex items-center rounded-full border transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60',
-        compact ? 'h-11 w-20 px-3' : 'h-12 w-24 px-3.5',
-        enabled
-          ? 'border-[rgba(255,107,154,0.3)] bg-[linear-gradient(135deg,rgba(255,107,154,0.92),rgba(168,139,250,0.92))] shadow-float'
-          : 'border-border/70 bg-white shadow-sm'
-      )}
-    >
+        className={cn(
+          'relative inline-flex items-center rounded-full border transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60',
+          compact ? 'h-11 w-20 px-3' : 'h-12 w-24 px-3.5',
+          enabled
+            ? 'border-[rgba(255,168,190,0.58)] bg-[linear-gradient(135deg,rgba(255,118,154,0.95),rgba(255,163,129,0.95))] shadow-float'
+            : 'border-border/70 bg-[linear-gradient(180deg,#ffffff,#f5f9ff)] shadow-sm'
+        )}
+      >
       <span
         className={cn(
           'absolute left-1.5 rounded-full bg-white shadow-md transition-transform duration-300',

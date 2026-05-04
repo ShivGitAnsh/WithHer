@@ -40,7 +40,7 @@ export function GuardiansPageClient({
   initialTrustLog
 }: {
   userId: string;
-  trip: TripSummary;
+  trip: TripSummary | null;
   initialGuardians: Guardian[];
   initialConsents: ConsentData[];
   initialTrustLog: TrustLogEntryData[];
@@ -133,6 +133,10 @@ export function GuardiansPageClient({
 
     startSharingTrip(async () => {
       try {
+        if (!trip) {
+          throw new Error('No trip is available to share right now.');
+        }
+
         const consent = await createConsent({
           tripId: trip.id,
           guardianId: shareGuardianId,
@@ -207,10 +211,16 @@ export function GuardiansPageClient({
           Keep your trusted circle close without making travel feel heavy
         </h1>
         <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">
-          SARA keeps sharing deliberate. Add the people you trust, choose what they
+          mySaathi keeps sharing deliberate. Add the people you trust, choose what they
           can see, and keep trip visibility time-bounded.
         </p>
       </section>
+
+      {!trip ? (
+        <div className="rounded-[1.8rem] border border-dashed border-border/80 bg-white/86 px-6 py-6 text-sm leading-7 text-slate-600 shadow-panel">
+          Guardian records are live, but trip sharing will stay unavailable until this user has at least one real trip.
+        </div>
+      ) : null}
 
       <section className="grid gap-5 lg:grid-cols-[1.15fr_0.85fr]">
         <div className="space-y-5">
@@ -306,8 +316,14 @@ export function GuardiansPageClient({
               </div>
             </div>
             <p className="mt-4 text-sm leading-7 text-slate-600">
-              Current trip: <span className="font-medium text-slate-900">{trip.title}</span>.
-              Sharing stays revocable and expires automatically.
+              {trip ? (
+                <>
+                  Current trip: <span className="font-medium text-slate-900">{trip.title}</span>.
+                  Sharing stays revocable and expires automatically.
+                </>
+              ) : (
+                'No live trip is available yet, so guardian visibility is waiting on the first trip.'
+              )}
             </p>
             <div className="mt-4 flex flex-wrap gap-3 text-sm text-slate-600">
               <div className="rounded-full bg-slate-100 px-3 py-1.5">
@@ -317,14 +333,16 @@ export function GuardiansPageClient({
                 {pendingInviteConsents.length} pending acceptance
               </div>
             </div>
-            <div className="mt-5 flex flex-wrap gap-3">
-              <Link
-                href={`/family-trust?tripId=${trip.id}`}
-                className={cn(buttonVariants({ variant: 'destructive' }))}
-              >
-                Open Family Trust Center
-              </Link>
-            </div>
+            {trip ? (
+              <div className="mt-5 flex flex-wrap gap-3">
+                <Link
+                  href={`/family-trust?tripId=${trip.id}`}
+                  className={cn(buttonVariants({ variant: 'destructive' }))}
+                >
+                  Open Family Trust Center
+                </Link>
+              </div>
+            ) : null}
           </div>
 
           <form
@@ -333,8 +351,13 @@ export function GuardiansPageClient({
           >
             <p className="eyebrow">Share current trip</p>
             <h2 className="mt-1 text-xl font-semibold text-slate-950">
-              Choose who can see this journey
+              {trip ? 'Choose who can see this journey' : 'Trip sharing unlocks when a trip exists'}
             </h2>
+            <p className="mt-4 text-sm leading-7 text-slate-600">
+              {trip
+                ? `Current trip: ${trip.title}. Sharing stays revocable and expires automatically.`
+                : 'Create a trip first, then return here to grant time-bounded guardian visibility.'}
+            </p>
             <div className="mt-5 space-y-4">
               <label className="block space-y-2">
                 <span className="text-sm font-medium text-slate-700">Guardian</span>
@@ -342,6 +365,7 @@ export function GuardiansPageClient({
                   className="h-11 w-full rounded-2xl border border-border bg-white px-4 text-sm text-slate-900 outline-none transition focus:border-slate-400"
                   value={shareGuardianId}
                   onChange={(event) => setShareGuardianId(event.target.value)}
+                  disabled={!trip}
                 >
                   {guardians.map((guardian) => (
                     <option key={guardian.id} value={guardian.id}>
@@ -358,6 +382,7 @@ export function GuardiansPageClient({
                   className="h-11 w-full rounded-2xl border border-border bg-white px-4 text-sm text-slate-900 outline-none transition focus:border-slate-400"
                   value={validUntil}
                   onChange={(event) => setValidUntil(event.target.value)}
+                  disabled={!trip}
                 />
               </label>
 
@@ -379,6 +404,7 @@ export function GuardiansPageClient({
                               : [...current, option.value]
                           )
                         }
+                        disabled={!trip}
                       />
                       {option.label}
                     </label>
@@ -390,7 +416,7 @@ export function GuardiansPageClient({
               <Button
                 type="submit"
                 variant="destructive"
-                disabled={isSharingTrip || !shareGuardianId || shareScopes.length === 0}
+                disabled={isSharingTrip || !trip || !shareGuardianId || shareScopes.length === 0}
               >
                 {isSharingTrip ? 'Sharing trip...' : 'Share trip'}
               </Button>

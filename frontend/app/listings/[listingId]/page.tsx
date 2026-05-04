@@ -5,7 +5,7 @@ import { ArrowLeft, ArrowRight, MapPin, ShieldCheck, Sparkles } from 'lucide-rea
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { getListingDetails, getListingSafetyScore } from '@/lib/api';
+import { getListingSafetyScore } from '@/lib/api';
 
 export default async function ListingDetailPage({
   params
@@ -13,12 +13,6 @@ export default async function ListingDetailPage({
   params: Promise<{ listingId: string }>;
 }) {
   const { listingId } = await params;
-  const listing = getListingDetails(listingId);
-
-  if (!listing) {
-    notFound();
-  }
-
   const safety = await getListingSafetyScore(listingId);
 
   if (!safety) {
@@ -28,7 +22,7 @@ export default async function ListingDetailPage({
   return (
     <div className="space-y-8 pb-8">
       <section className="overflow-hidden rounded-[2rem] border border-border/70 bg-white/92 shadow-panel">
-        <div className={`min-h-[240px] ${listing.coverClass}`} />
+        <div className="min-h-[240px] bg-[linear-gradient(135deg,#0f766e_0%,#155e75_38%,#f8fafc_100%)]" />
         <div className="grid gap-6 px-6 py-7 lg:grid-cols-[1.05fr_0.95fr] lg:px-8">
           <div className="space-y-4">
             <Link
@@ -44,20 +38,22 @@ export default async function ListingDetailPage({
             </div>
             <div>
               <h1 className="text-3xl font-semibold text-slate-950 sm:text-4xl">
-                {listing.name}
+                {safety.name}
               </h1>
               <p className="mt-2 flex items-center gap-2 text-sm text-slate-500">
                 <MapPin className="h-4 w-4" />
-                {listing.neighborhood}, {listing.city}
+                {safety.neighborhood}, {safety.city}
               </p>
             </div>
             <p className="max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">
-              {listing.summary}
+              This listing page is now driven entirely by the live safety API. The
+              recommendation, reasons, review signals, and transfer guidance below are all
+              rendered from the backend response for this listing id.
             </p>
             <div className="flex flex-wrap gap-3">
               <Button variant="destructive">Use for trip planning</Button>
               <Link href="/safety" className="inline-flex items-center gap-2 text-sm font-medium text-slate-600 transition hover:text-slate-950">
-                Learn how SARA scores safety
+                Learn how mySaathi scores safety
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </div>

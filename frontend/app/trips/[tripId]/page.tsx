@@ -15,9 +15,16 @@ export default async function TripDetailPage({
   params: Promise<{ tripId: string }>;
 }) {
   const { tripId } = await params;
-  const data = await getDashboardPageData(tripId);
+  let data;
+
+  try {
+    data = await getDashboardPageData(tripId);
+  } catch {
+    notFound();
+  }
+
   const [emergencyContacts, checkInRules, matchingProfile, matchingCandidates] = await Promise.all([
-    getEmergencyContacts(data.trip.userId ?? 'demo-user-001'),
+    getEmergencyContacts(data.trip.userId ?? ''),
     getCheckInRules(tripId),
     getMatchingProfile(tripId),
     getMatchingCandidates(tripId)
